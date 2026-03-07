@@ -1,9 +1,11 @@
 """
 Dashboard Router — Live status, signal control, video streaming
 """
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Form, File, UploadFile
 from fastapi.responses import StreamingResponse, Response
 from sqlalchemy.orm import Session
+import os
+import shutil
 
 from ..database import get_db
 from ..models import User
@@ -59,6 +61,52 @@ def override_signal(
     db.commit()
 
     return {"success": success}
+
+# ──────────────────────────────────────
+#  POST /api/setup_streams
+# ──────────────────────────────────────
+@router.post("/setup_streams")
+def setup_streams(
+    cam_1: str = Form(default=""),
+    cam_2: str = Form(default=""),
+    cam_3: str = Form(default=""),
+    cam_4: str = Form(default=""),
+    video_1: UploadFile = File(default=None),
+    video_2: UploadFile = File(default=None),
+    video_3: UploadFile = File(default=None),
+    video_4: UploadFile = File(default=None),
+    current_user: User = Depends(get_current_admin),
+):
+    if not _video_processor:
+        raise HTTPException(status_code=503, detail="Video processor not initialized")
+
+    upload_dir = "uploads"
+    if not os.path.exists(upload_dir):
+        os.makedirs(upload_dir)
+
+    cams = [cam_1, cam_2, cam_3, cam_4]
+    vids = [video_1, video_2, video_3, video_4]
+    final_sources = []
+
+    for i in range(4):
+        cam = cams[i].strip() if cams[i] else ""
+        vid = vids[i]
+
+        if cam:
+            if cam.isdigit():
+                final_sources.append(int(cam))
+            else:
+                final_sources.append(cam)
+        elif vid and vid.filename:
+            file_path = os.path.join(upload_dir, vid.filename)
+            with open(file_path, "wb") as buffer:
+                shutil.copyfileobj(vid.file, buffer)
+            final_sources.append(file_path)
+        else:
+            final_sources.append(None)
+
+    _video_processor.start_streams(final_sources)
+    return {"success": True, "sources": final_sources}
 
 
 # ──────────────────────────────────────

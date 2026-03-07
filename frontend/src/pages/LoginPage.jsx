@@ -3,7 +3,7 @@
  */
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react';
 
@@ -122,9 +122,14 @@ export default function LoginPage() {
                         </button>
                     </form>
 
-                    <p className="text-center text-gray-600 text-sm mt-6">
-                        Default credentials: <span className="text-gray-400">admin / admin123</span>
-                    </p>
+                    <div className="text-center mt-6 space-y-2 text-sm">
+                        <p className="text-gray-600 text-xs">
+                            Default credentials: <span className="text-gray-400">admin / admin123</span>
+                        </p>
+                        <p className="text-gray-400">
+                            Don't have an account? <Link to="/register" className="text-[#e50914] font-bold hover:underline">Sign Up</Link>
+                        </p>
+                    </div>
                 </div>
             </motion.div>
         </div>

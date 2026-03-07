@@ -5,11 +5,18 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Sidebar from './components/Sidebar';
 import LoginPage from './pages/LoginPage';
 import SettingsPage from './pages/SettingsPage';
+import RegisterPage from './pages/RegisterPage';
+import UserDashboard from './pages/UserDashboard';
+import CityOverviewPage from './pages/CityOverviewPage';
+import CameraConfigPage from './pages/CameraConfigPage';
+import AnalyticsPage from './pages/AnalyticsPage';
+import ReportsPage from './pages/ReportsPage';
+import AmbulanceDriverPage from './pages/AmbulanceDriverPage';
 import { Loader2, Video, AlertTriangle } from 'lucide-react';
 import { dashboard } from './api/client';
 
 // ── Protected Route Wrapper ──
-function ProtectedRoute({ children }) {
+function ProtectedRoute({ children, allowedRoles }) {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -21,7 +28,19 @@ function ProtectedRoute({ children }) {
   }
 
   if (!user) return <Navigate to="/login" replace />;
+  if (allowedRoles && !allowedRoles.includes(user.role)) return <Navigate to="/unauthorized" replace />;
   return children;
+}
+
+// ── Role Based Redirect ──
+function RoleRedirect() {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  if (!user) return <Navigate to="/login" replace />; // If you want a landing page later, set to /landing
+
+  if (user.role === 'admin') return <Navigate to="/dashboard" replace />;
+  if (user.role === 'ambulance_driver') return <Navigate to="/ambulance" replace />;
+  return <Navigate to="/user-portal" replace />;
 }
 
 // ── Dashboard Home ──
@@ -161,8 +180,18 @@ function AppLayout() {
         <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-[#e50914]/5 to-transparent pointer-events-none z-0" />
         <div className="relative z-10 h-full">
           <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['admin']}><Home /></ProtectedRoute>} />
+            <Route path="/analytics" element={<ProtectedRoute allowedRoles={['admin']}><AnalyticsPage /></ProtectedRoute>} />
+            <Route path="/reports" element={<ProtectedRoute allowedRoles={['admin']}><ReportsPage /></ProtectedRoute>} />
+            <Route path="/city" element={<ProtectedRoute allowedRoles={['admin']}><CityOverviewPage /></ProtectedRoute>} />
+            <Route path="/camera" element={<ProtectedRoute allowedRoles={['admin']}><CameraConfigPage /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute allowedRoles={['admin']}><SettingsPage /></ProtectedRoute>} />
+
+            <Route path="/ambulance" element={<ProtectedRoute allowedRoles={['ambulance_driver', 'admin']}><AmbulanceDriverPage /></ProtectedRoute>} />
+            <Route path="/user-portal" element={<ProtectedRoute allowedRoles={['user', 'admin']}><UserDashboard /></ProtectedRoute>} />
+
+            <Route path="/unauthorized" element={<div className="p-8 text-center text-red-500 font-bold">Unauthorized Access</div>} />
+            <Route path="/" element={<RoleRedirect />} />
             <Route
               path="*"
               element={
@@ -185,12 +214,11 @@ function App() {
       <Router>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
           <Route
             path="/*"
             element={
-              <ProtectedRoute>
-                <AppLayout />
-              </ProtectedRoute>
+              <AppLayout />
             }
           />
         </Routes>

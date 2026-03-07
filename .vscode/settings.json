@@ -1,4 +1,4 @@
 {
-    "python.defaultInterpreterPath": "${workspaceFolder}\\venv\\Scripts\\python.exe",
+    "python.defaultInterpreterPath": "c:\\Users\\Alvin Sony\\Desktop\\Alvin\\MCA\\Sem 4\\main project\\New_traffic_vision_ai\\traff\\venv\\Scripts\\python.exe",
     "python.terminal.activateEnvironment": true
 }

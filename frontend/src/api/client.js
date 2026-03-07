@@ -82,6 +82,17 @@ export const dashboard = {
             method: 'POST',
             body: JSON.stringify({ lane_id }),
         }),
+    setupStreams: (formData) => {
+        const token = getToken();
+        return fetch(`${API_BASE}/setup_streams`, {
+            method: 'POST',
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+            body: formData, // do NOT stringify FormData
+        }).then(res => {
+            if (!res.ok) throw new Error('Failed to setup streams');
+            return res.json();
+        });
+    }
 };
 
 // ── Analytics ──
