@@ -86,7 +86,7 @@ export default function Sidebar() {
                     </div>
                     <div className="text-left flex-1 overflow-hidden">
                         <p className="text-sm font-medium text-white truncate">{user.username}</p>
-                        <p className="text-[10px] text-gray-500 truncate uppercase tracking-widest font-bold">{user.role}</p>
+                        <p className="text-xs text-gray-500 truncate uppercase tracking-widest font-bold">{user.role}</p>
                     </div>
                 </div>
 

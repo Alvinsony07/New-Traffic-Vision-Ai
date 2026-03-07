@@ -168,7 +168,7 @@ export default function LoginPage() {
                     <form onSubmit={handleSubmit} className="space-y-5">
                         {/* Username */}
                         <div>
-                            <label className="block text-[11px] font-bold text-gray-500 mb-2 uppercase tracking-[0.15em]">Username</label>
+                            <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-[0.15em]">Username</label>
                             <input
                                 type="text"
                                 value={username}
@@ -182,7 +182,7 @@ export default function LoginPage() {
 
                         {/* Password */}
                         <div>
-                            <label className="block text-[11px] font-bold text-gray-500 mb-2 uppercase tracking-[0.15em]">Password</label>
+                            <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-[0.15em]">Password</label>
                             <div className="relative">
                                 <input
                                     type={showPassword ? 'text' : 'password'}
@@ -220,7 +220,7 @@ export default function LoginPage() {
                     </form>
 
                     <div className="text-center mt-7 space-y-3 text-sm">
-                        <div className="flex items-center gap-2 justify-center text-gray-600 text-[11px]">
+                        <div className="flex items-center gap-2 justify-center text-gray-600 text-xs">
                             <div className="h-px flex-1 bg-white/5" />
                             <span className="uppercase tracking-widest font-bold">Demo Access</span>
                             <div className="h-px flex-1 bg-white/5" />
@@ -235,7 +235,7 @@ export default function LoginPage() {
                 </motion.div>
 
                 {/* Footer */}
-                <div className="text-center mt-6 text-[10px] text-gray-700 tracking-wider uppercase font-bold">
+                <div className="text-center mt-6 text-xs text-gray-700 tracking-wider uppercase font-bold">
                     Powered by YOLOv8 · FastAPI · React
                 </div>
             </motion.div>

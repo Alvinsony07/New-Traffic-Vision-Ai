@@ -52,7 +52,7 @@ function ProtectedRoute({ children, allowedRoles }) {
               <div className="w-4 h-4 rounded-full bg-[#E50914]/30 animate-pulse" />
             </div>
           </div>
-          <p className="text-[10px] text-gray-600 uppercase tracking-[0.3em] font-bold">Loading System</p>
+          <p className="text-xs text-gray-600 uppercase tracking-[0.3em] font-bold">Loading System</p>
         </div>
       </div>
     );
@@ -131,14 +131,14 @@ function Home() {
           <div className="px-4 py-2 bg-[#181818] border border-white/[0.06] rounded-xl flex items-center gap-3">
             <Car className="w-4 h-4 text-[#0071EB]" />
             <div>
-              <div className="text-[9px] text-gray-500 uppercase tracking-wider font-bold">Total Vehicles</div>
+              <div className="text-xs text-gray-500 uppercase tracking-wider font-bold">Total Vehicles</div>
               <div className="text-white font-bold text-lg leading-none"><AnimatedNumber value={totalVehicles} /></div>
             </div>
           </div>
           <div className="px-4 py-2 bg-[#181818] border border-white/[0.06] rounded-xl flex items-center gap-3">
             <Timer className="w-4 h-4 text-[#46D369]" />
             <div>
-              <div className="text-[9px] text-gray-500 uppercase tracking-wider font-bold">Signal Timer</div>
+              <div className="text-xs text-gray-500 uppercase tracking-wider font-bold">Signal Timer</div>
               <div className="text-white font-bold text-lg leading-none tabular-nums">{remaining}s</div>
             </div>
           </div>
@@ -181,7 +181,7 @@ function Home() {
                   </div>
                   <div>
                     <span className="font-bold text-white tracking-wide text-[15px]">Lane {i + 1}</span>
-                    <div className="text-[9px] text-gray-600 uppercase tracking-widest font-bold">Node 0{i + 1}</div>
+                    <div className="text-xs text-gray-600 uppercase tracking-widest font-bold">Node 0{i + 1}</div>
                   </div>
                 </div>
 
@@ -208,19 +208,19 @@ function Home() {
                     <div className="relative">
                       <div className="w-10 h-10 rounded-full border-2 border-[#E50914]/10 border-t-[#E50914]/50 animate-spin" />
                     </div>
-                    <span className="text-[9px] font-bold tracking-[0.25em] uppercase text-gray-600">Connecting Feed</span>
+                    <span className="text-xs font-bold tracking-[0.25em] uppercase text-gray-600">Connecting Feed</span>
                   </div>
                 </div>
 
                 {/* HUD overlay on video */}
                 <div className="absolute top-2 left-2 z-20 flex gap-1.5">
-                  <div className="bg-black/60 backdrop-blur-sm px-2 py-1 rounded text-[9px] text-gray-300 font-bold tracking-wider flex items-center gap-1">
+                  <div className="bg-black/60 backdrop-blur-sm px-2 py-1 rounded text-xs text-gray-300 font-bold tracking-wider flex items-center gap-1">
                     <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
                     LIVE
                   </div>
                 </div>
                 <div className="absolute bottom-2 right-2 z-20">
-                  <div className="bg-black/60 backdrop-blur-sm px-2 py-1 rounded text-[9px] font-mono text-gray-400">
+                  <div className="bg-black/60 backdrop-blur-sm px-2 py-1 rounded text-xs font-mono text-gray-400">
                     480×270
                   </div>
                 </div>
@@ -231,25 +231,25 @@ function Home() {
                 <div className="flex gap-6">
                   {/* Vehicle Count */}
                   <div>
-                    <div className="text-[9px] text-gray-500 uppercase tracking-widest font-bold mb-1">Vehicles</div>
+                    <div className="text-xs text-gray-500 uppercase tracking-widest font-bold mb-1">Vehicles</div>
                     <div className="text-2xl font-black text-white leading-none tabular-nums">
                       <AnimatedNumber value={vehicleCount} />
                     </div>
                   </div>
                   {/* Density */}
                   <div>
-                    <div className="text-[9px] text-gray-500 uppercase tracking-widest font-bold mb-1">Density</div>
-                    <span className={`text-[10px] font-black tracking-widest py-1 px-3 rounded-md uppercase ${density === 'High' ? 'bg-[#E50914]/15 text-[#E50914]' : density === 'Medium' ? 'bg-[#E87C03]/15 text-[#E87C03]' : 'bg-[#46D369]/15 text-[#46D369]'}`}>
+                    <div className="text-xs text-gray-500 uppercase tracking-widest font-bold mb-1">Density</div>
+                    <span className={`text-xs font-black tracking-widest py-1 px-3 rounded-md uppercase ${density === 'High' ? 'bg-[#E50914]/15 text-[#E50914]' : density === 'Medium' ? 'bg-[#E87C03]/15 text-[#E87C03]' : 'bg-[#46D369]/15 text-[#46D369]'}`}>
                       {density}
                     </span>
                   </div>
                   {/* Vehicle Breakdown */}
                   {Object.keys(details).length > 0 && (
                     <div className="hidden md:block">
-                      <div className="text-[9px] text-gray-500 uppercase tracking-widest font-bold mb-1">Types</div>
+                      <div className="text-xs text-gray-500 uppercase tracking-widest font-bold mb-1">Types</div>
                       <div className="flex gap-1.5">
                         {Object.entries(details).map(([type, count]) => count > 0 && (
-                          <span key={type} className="text-[9px] bg-white/[0.04] border border-white/[0.06] px-2 py-0.5 rounded text-gray-400 font-mono">
+                          <span key={type} className="text-xs bg-white/[0.04] border border-white/[0.06] px-2 py-0.5 rounded text-gray-400 font-mono">
                             {type}: {count}
                           </span>
                         ))}

@@ -65,7 +65,7 @@ export default function RegisterPage() {
 
     const InputField = ({ label, name, type = 'text', placeholder, required = false, half = false }) => (
         <div className={half ? '' : ''}>
-            <label className="block text-[10px] font-bold text-gray-500 mb-1.5 uppercase tracking-[0.15em]">{label}</label>
+            <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-[0.15em]">{label}</label>
             <input
                 type={type}
                 required={required}
@@ -139,7 +139,7 @@ export default function RegisterPage() {
                         </div>
 
                         <div>
-                            <label className="block text-[10px] font-bold text-gray-500 mb-1.5 uppercase tracking-[0.15em]">Password</label>
+                            <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-[0.15em]">Password</label>
                             <div className="relative">
                                 <input
                                     type={showPassword ? "text" : "password"}
@@ -162,8 +162,8 @@ export default function RegisterPage() {
                                     className="mt-2"
                                 >
                                     <div className="flex justify-between mb-1">
-                                        <span className="text-[10px] text-gray-600 uppercase tracking-wider font-bold">Security</span>
-                                        <span className={`text-[10px] font-bold uppercase tracking-wider ${strength.color}`}>{strength.text}</span>
+                                        <span className="text-xs text-gray-600 uppercase tracking-wider font-bold">Security</span>
+                                        <span className={`text-xs font-bold uppercase tracking-wider ${strength.color}`}>{strength.text}</span>
                                     </div>
                                     <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
                                         <motion.div
@@ -178,7 +178,7 @@ export default function RegisterPage() {
                         </div>
 
                         <div>
-                            <label className="block text-[10px] font-bold text-gray-500 mb-1.5 uppercase tracking-[0.15em]">Confirm Password</label>
+                            <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-[0.15em]">Confirm Password</label>
                             <div className="relative">
                                 <input
                                     type={showPassword ? "text" : "password"}

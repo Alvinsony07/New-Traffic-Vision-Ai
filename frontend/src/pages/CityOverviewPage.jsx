@@ -60,10 +60,10 @@ export default function CityOverviewPage() {
                             <Popup>
                                 <div className="text-sm p-1 min-w-[180px]">
                                     <div className="font-bold text-[#E50914] flex justify-between gap-4 mb-1">
-                                        Incident #{r.id} <span className="bg-[#E50914]/20 text-[#E50914] px-1.5 rounded text-[10px] font-bold">{r.status}</span>
+                                        Incident #{r.id} <span className="bg-[#E50914]/20 text-[#E50914] px-1.5 rounded text-xs font-bold">{r.status}</span>
                                     </div>
                                     <p className="text-gray-300 text-xs mb-1">{r.description}</p>
-                                    <div className="text-[10px] text-gray-500">{r.timestamp}</div>
+                                    <div className="text-xs text-gray-500">{r.timestamp}</div>
                                 </div>
                             </Popup>
                         </Marker>
@@ -75,7 +75,7 @@ export default function CityOverviewPage() {
                                 <div className="text-sm p-1 min-w-[180px]">
                                     <div className="font-bold text-[#0071EB] mb-1">Dispatch → {d.hospital_name}</div>
                                     <p className="text-gray-300 text-xs mb-1">Status: {d.status}</p>
-                                    <div className="text-[10px] text-gray-500">{d.timestamp}</div>
+                                    <div className="text-xs text-gray-500">{d.timestamp}</div>
                                 </div>
                             </Popup>
                         </Marker>
@@ -91,7 +91,7 @@ export default function CityOverviewPage() {
                                             const s = mapData.signal_status.states[i];
                                             return (
                                                 <div key={i} className="bg-[#0a0a0a] p-2 rounded-lg">
-                                                    <div className="text-[10px] text-gray-400 text-center">L{i + 1}</div>
+                                                    <div className="text-xs text-gray-400 text-center">L{i + 1}</div>
                                                     <div className={`w-3 h-3 rounded-full mx-auto mt-1 ${s === 'GREEN' ? 'bg-[#46D369] shadow-[0_0_8px_rgba(70,211,105,0.8)]' : s === 'YELLOW' ? 'bg-[#E87C03]' : 'bg-[#E50914]'}`} />
                                                 </div>
                                             );
@@ -108,23 +108,23 @@ export default function CityOverviewPage() {
             <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-[#0a0a0a]/85 backdrop-blur-xl border border-white/[0.08] rounded-2xl px-6 py-3 flex gap-6 shadow-[0_8px_40px_rgba(0,0,0,0.6)]">
                 <div className="text-center">
                     <div className="text-2xl font-black text-white tabular-nums">{mapData.summary.total_vehicles}</div>
-                    <div className="text-[8px] text-gray-500 font-bold tracking-[0.2em] uppercase">Live Vehicles</div>
+                    <div className="text-xs text-gray-500 font-bold tracking-[0.2em] uppercase">Live Vehicles</div>
                 </div>
                 <div className="w-[1px] bg-white/[0.06]" />
                 <div className="text-center">
                     <div className="text-2xl font-black text-[#E50914] tabular-nums">{mapData.summary.active_incidents}</div>
-                    <div className="text-[8px] text-gray-500 font-bold tracking-[0.2em] uppercase">Incidents</div>
+                    <div className="text-xs text-gray-500 font-bold tracking-[0.2em] uppercase">Incidents</div>
                 </div>
                 <div className="w-[1px] bg-white/[0.06]" />
                 <div className="text-center">
                     <div className="text-2xl font-black text-[#0071EB] tabular-nums">{mapData.summary.active_dispatches}</div>
-                    <div className="text-[8px] text-gray-500 font-bold tracking-[0.2em] uppercase">Dispatches</div>
+                    <div className="text-xs text-gray-500 font-bold tracking-[0.2em] uppercase">Dispatches</div>
                 </div>
             </div>
 
             {/* Left Panel */}
             <div className="absolute top-16 left-4 z-10 w-64 max-h-[calc(100vh-100px)] overflow-y-auto bg-[#0a0a0a]/85 backdrop-blur-xl border border-white/[0.08] rounded-2xl p-4 tv-scrollbar shadow-lg">
-                <h3 className="text-[9px] text-[#0071EB] tracking-[0.2em] uppercase font-bold mb-3 flex items-center gap-2">
+                <h3 className="text-xs text-[#0071EB] tracking-[0.2em] uppercase font-bold mb-3 flex items-center gap-2">
                     <Crosshair className="w-3.5 h-3.5" /> Intersection Nodes
                 </h3>
 
@@ -132,12 +132,12 @@ export default function CityOverviewPage() {
                     <div className="w-2 h-2 rounded-full bg-[#46D369] shadow-[0_0_8px_rgba(70,211,105,0.6)]" />
                     <div className="flex-1">
                         <div className="text-sm font-bold text-white">Central Junction</div>
-                        <div className="text-[9px] text-gray-600 font-mono">Node 01</div>
+                        <div className="text-xs text-gray-600 font-mono">Node 01</div>
                     </div>
                     <div className="text-lg font-black text-white tabular-nums">{mapData.summary.total_vehicles}</div>
                 </div>
 
-                <h3 className="text-[9px] text-[#0071EB] tracking-[0.2em] uppercase font-bold mb-3 flex items-center gap-2 pt-3 border-t border-white/[0.06]">
+                <h3 className="text-xs text-[#0071EB] tracking-[0.2em] uppercase font-bold mb-3 flex items-center gap-2 pt-3 border-t border-white/[0.06]">
                     <Layers className="w-3.5 h-3.5" /> Map Layers
                 </h3>
 
@@ -165,12 +165,12 @@ export default function CityOverviewPage() {
             {/* Bottom Right: Live Feed */}
             <div className="absolute bottom-4 right-4 z-10 w-72 bg-[#0a0a0a]/85 backdrop-blur-xl border border-white/[0.08] rounded-2xl p-4 shadow-lg">
                 <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-[9px] text-[#0071EB] tracking-[0.2em] uppercase font-bold flex items-center gap-2">
+                    <h3 className="text-xs text-[#0071EB] tracking-[0.2em] uppercase font-bold flex items-center gap-2">
                         <Radio className="w-3.5 h-3.5" /> Live Event Feed
                     </h3>
                     <div className="flex items-center gap-1.5">
                         <div className="w-1.5 h-1.5 rounded-full bg-[#E50914] animate-pulse" />
-                        <span className="text-[8px] text-gray-500 font-bold tracking-wider">LIVE</span>
+                        <span className="text-xs text-gray-500 font-bold tracking-wider">LIVE</span>
                     </div>
                 </div>
 
@@ -179,11 +179,11 @@ export default function CityOverviewPage() {
                         <div className="text-xs text-center p-6 text-gray-600">No events yet</div>
                     ) : feed.map((item) => (
                         <div key={`${item.type}-${item.id}`} className={`p-2.5 rounded-lg border-l-2 bg-white/[0.02] ${item.type === 'incident' ? 'border-l-[#E50914]' : 'border-l-[#0071EB]'}`}>
-                            <div className="text-[9px] text-gray-600 flex justify-between">
+                            <div className="text-xs text-gray-600 flex justify-between">
                                 <span className="font-mono">{item.time || item.timestamp}</span>
                                 <span className={`uppercase font-bold ${item.type === 'incident' ? 'text-[#E50914]' : 'text-[#0071EB]'}`}>{item.type}</span>
                             </div>
-                            <div className="text-[11px] text-gray-300 mt-0.5 font-medium">
+                            <div className="text-xs text-gray-300 mt-0.5 font-medium">
                                 {item.type === 'incident' ? item.location : `→ ${item.hospital_name}`}
                             </div>
                         </div>

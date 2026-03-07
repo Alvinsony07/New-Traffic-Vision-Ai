@@ -67,7 +67,7 @@ export default function CameraConfigPage() {
                 <div className="relative z-10 flex items-center gap-4">
                     <div className="px-4 py-2 bg-white/[0.03] border border-white/[0.06] rounded-xl text-center">
                         <div className="text-lg font-black text-white tabular-nums">{activeCount}/4</div>
-                        <div className="text-[8px] text-gray-500 uppercase tracking-widest font-bold">Ready</div>
+                        <div className="text-xs text-gray-500 uppercase tracking-widest font-bold">Ready</div>
                     </div>
                     <button
                         onClick={handleSubmit}
@@ -100,7 +100,7 @@ export default function CameraConfigPage() {
                                     <Camera className="w-5 h-5 text-gray-500 group-hover:text-[#0071EB] transition-colors" />
                                     NODE 0{i + 1}
                                 </h3>
-                                <div className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 border ${isActive
+                                <div className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest flex items-center gap-1.5 border ${isActive
                                     ? 'bg-[#46D369]/10 text-[#46D369] border-[#46D369]/25'
                                     : 'bg-[#E50914]/10 text-[#E50914] border-[#E50914]/25'}`}
                                 >
@@ -110,7 +110,7 @@ export default function CameraConfigPage() {
 
                             {/* RTSP Input */}
                             <div className="space-y-1.5">
-                                <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">RTSP Stream URL</label>
+                                <label className="text-xs text-gray-500 font-bold uppercase tracking-wider">RTSP Stream URL</label>
                                 <input
                                     type="text"
                                     placeholder="rtsp://admin:1234@192.168.1.100:554/stream"
@@ -120,7 +120,7 @@ export default function CameraConfigPage() {
                                 />
                             </div>
 
-                            <div className="text-center text-[9px] font-bold text-gray-700 tracking-[0.2em] uppercase">— or local video —</div>
+                            <div className="text-center text-xs font-bold text-gray-700 tracking-[0.2em] uppercase">— or local video —</div>
 
                             {/* File Upload */}
                             <div className="space-y-2">

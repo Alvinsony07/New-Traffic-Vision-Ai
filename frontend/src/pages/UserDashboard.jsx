@@ -101,7 +101,7 @@ export default function UserDashboard() {
                             <h1 className="text-2xl font-black tracking-[0.04em] text-white" style={{ fontFamily: 'var(--font-display)' }}>
                                 CITIZENS PORTAL
                             </h1>
-                            <p className="text-[9px] text-gray-500 uppercase tracking-[0.2em] font-bold flex items-center gap-1.5">
+                            <p className="text-xs text-gray-500 uppercase tracking-[0.2em] font-bold flex items-center gap-1.5">
                                 <Shield className="w-3 h-3 text-[#E50914]" /> Welcome, {user?.username}
                             </p>
                         </div>
@@ -142,7 +142,7 @@ export default function UserDashboard() {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="space-y-4">
                                             <div>
-                                                <label className="block text-[10px] font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Location Name *</label>
+                                                <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Location Name *</label>
                                                 <input
                                                     type="text"
                                                     value={form.location}
@@ -153,7 +153,7 @@ export default function UserDashboard() {
                                                 />
                                             </div>
                                             <div>
-                                                <label className="block text-[10px] font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Description *</label>
+                                                <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Description *</label>
                                                 <textarea
                                                     rows="4"
                                                     value={form.description}
@@ -167,11 +167,11 @@ export default function UserDashboard() {
                                             {mapPosition && (
                                                 <div className="flex gap-3">
                                                     <div className="flex-1 bg-[#0a0a0a] border border-white/[0.04] rounded-lg p-2 text-center">
-                                                        <div className="text-[9px] text-gray-500 uppercase tracking-wider font-bold">Latitude</div>
+                                                        <div className="text-xs text-gray-500 uppercase tracking-wider font-bold">Latitude</div>
                                                         <div className="text-xs font-mono text-white">{mapPosition[0].toFixed(6)}</div>
                                                     </div>
                                                     <div className="flex-1 bg-[#0a0a0a] border border-white/[0.04] rounded-lg p-2 text-center">
-                                                        <div className="text-[9px] text-gray-500 uppercase tracking-wider font-bold">Longitude</div>
+                                                        <div className="text-xs text-gray-500 uppercase tracking-wider font-bold">Longitude</div>
                                                         <div className="text-xs font-mono text-white">{mapPosition[1].toFixed(6)}</div>
                                                     </div>
                                                 </div>
@@ -208,7 +208,7 @@ export default function UserDashboard() {
                     <h2 className="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2">
                         <FileText className="w-4 h-4 text-[#E87C03]" /> Your Reports
                     </h2>
-                    <span className="text-[10px] text-gray-600 font-bold">{myReports.length} total</span>
+                    <span className="text-xs text-gray-600 font-bold">{myReports.length} total</span>
                 </div>
 
                 {loading ? (
@@ -219,7 +219,7 @@ export default function UserDashboard() {
                     <div className="text-center py-14 text-gray-600">
                         <FileText className="w-10 h-10 mx-auto mb-3 opacity-20" />
                         <p className="text-sm font-medium">No reports yet</p>
-                        <p className="text-[10px] text-gray-700 mt-1">Your submitted accident reports will appear here</p>
+                        <p className="text-xs text-gray-700 mt-1">Your submitted accident reports will appear here</p>
                     </div>
                 ) : (
                     <div className="divide-y divide-white/[0.03]">
@@ -246,11 +246,11 @@ export default function UserDashboard() {
                                         </div>
 
                                         <div className="flex flex-col items-end gap-1.5">
-                                            <span className="px-2.5 py-0.5 rounded text-[9px] font-black uppercase tracking-widest border"
+                                            <span className="px-2.5 py-0.5 rounded text-xs font-black uppercase tracking-widest border"
                                                 style={{ backgroundColor: `${sc.color}12`, color: sc.color, borderColor: `${sc.color}30` }}>
                                                 {sc.label}
                                             </span>
-                                            <div className="flex items-center gap-1 text-[10px] text-gray-600 font-mono">
+                                            <div className="flex items-center gap-1 text-xs text-gray-600 font-mono">
                                                 <Clock className="w-3 h-3" /> {r.timestamp}
                                             </div>
                                         </div>

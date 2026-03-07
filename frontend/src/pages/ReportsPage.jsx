@@ -86,14 +86,14 @@ export default function ReportsPage() {
             <div className="flex h-full items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
                     <div className="w-10 h-10 rounded-full border-2 border-[#E50914]/20 border-t-[#E50914] animate-spin" />
-                    <p className="text-[10px] text-gray-600 uppercase tracking-[0.3em] font-bold">Loading Reports</p>
+                    <p className="text-xs text-gray-600 uppercase tracking-[0.3em] font-bold">Loading Reports</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
+        <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-6">
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-[#181818] border border-white/[0.06] rounded-2xl p-6 shadow-lg relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-[#E50914]/[0.03] rounded-bl-[100px] pointer-events-none" />
@@ -138,7 +138,7 @@ export default function ReportsPage() {
                 ].map((s, i) => (
                     <div key={i} className={`${s.bg} border border-white/[0.04] rounded-xl p-3 text-center`}>
                         <div className={`text-xl font-black ${s.color}`}>{s.value}</div>
-                        <div className="text-[9px] text-gray-500 uppercase tracking-widest font-bold">{s.label}</div>
+                        <div className="text-xs text-gray-500 uppercase tracking-widest font-bold">{s.label}</div>
                     </div>
                 ))}
             </div>
@@ -148,7 +148,7 @@ export default function ReportsPage() {
                 <div className="overflow-x-auto tv-scrollbar">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="bg-[#0d0d0d] text-[9px] uppercase tracking-widest text-gray-600 font-bold border-b border-white/[0.04]">
+                            <tr className="bg-[#0d0d0d] text-xs uppercase tracking-widest text-gray-600 font-bold border-b border-white/[0.04]">
                                 <th className="p-4 w-20"><Hash className="w-3 h-3 inline" /> ID</th>
                                 <th className="p-4 w-36"><Clock className="w-3 h-3 inline" /> Time</th>
                                 <th className="p-4">Location / Description</th>
@@ -175,7 +175,7 @@ export default function ReportsPage() {
                                         </td>
                                         <td className="p-4 text-sm text-gray-400 font-medium">{r.user}</td>
                                         <td className="p-4 text-center">
-                                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border ${sc.bg} ${sc.text} ${sc.border}`}>
+                                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-black uppercase tracking-widest border ${sc.bg} ${sc.text} ${sc.border}`}>
                                                 <StatusIcon className="w-3 h-3" />
                                                 {r.status}
                                             </span>
@@ -220,7 +220,7 @@ export default function ReportsPage() {
 
                                 <form onSubmit={handleDispatch} className="space-y-4">
                                     <div>
-                                        <label className="block text-[10px] font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Hospital / Base Unit</label>
+                                        <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Hospital / Base Unit</label>
                                         <input
                                             type="text" required
                                             value={dispatchData.hospital_name}
@@ -230,20 +230,20 @@ export default function ReportsPage() {
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-[10px] font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Lat</label>
+                                            <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Lat</label>
                                             <input type="text" required value={dispatchData.hospital_lat}
                                                 onChange={e => setDispatchData({ ...dispatchData, hospital_lat: e.target.value })}
                                                 className="w-full bg-[#0a0a0a] border border-white/[0.08] text-white p-3 rounded-xl focus:border-[#E50914]/50 outline-none text-sm font-mono" />
                                         </div>
                                         <div>
-                                            <label className="block text-[10px] font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Lng</label>
+                                            <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Lng</label>
                                             <input type="text" required value={dispatchData.hospital_lng}
                                                 onChange={e => setDispatchData({ ...dispatchData, hospital_lng: e.target.value })}
                                                 className="w-full bg-[#0a0a0a] border border-white/[0.08] text-white p-3 rounded-xl focus:border-[#E50914]/50 outline-none text-sm font-mono" />
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="block text-[10px] font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Distance (km)</label>
+                                        <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Distance (km)</label>
                                         <input type="number" step="0.1" required value={dispatchData.distance_km}
                                             onChange={e => setDispatchData({ ...dispatchData, distance_km: e.target.value })}
                                             className="w-full bg-[#0a0a0a] border border-white/[0.08] text-white p-3 rounded-xl focus:border-[#E50914]/50 outline-none text-sm" />

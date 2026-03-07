@@ -83,7 +83,7 @@ export default function SettingsPage() {
             <div className="flex h-full items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
                     <div className="w-10 h-10 rounded-full border-2 border-[#E50914]/20 border-t-[#E50914] animate-spin" />
-                    <p className="text-[10px] text-gray-600 uppercase tracking-[0.3em] font-bold">Loading Settings</p>
+                    <p className="text-xs text-gray-600 uppercase tracking-[0.3em] font-bold">Loading Settings</p>
                 </div>
             </div>
         );
@@ -97,7 +97,7 @@ export default function SettingsPage() {
     ];
 
     return (
-        <div className="p-6 lg:p-8 pb-32 max-w-7xl mx-auto">
+        <div className="p-6 lg:p-8 pb-32 max-w-6xl mx-auto">
 
 
             {/* Header */}
@@ -129,7 +129,7 @@ export default function SettingsPage() {
 
                     <div className="space-y-6">
                         <div>
-                            <label className="block text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-wider">YOLO Model</label>
+                            <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">YOLO Model</label>
                             <select
                                 value={settings.yolo_model}
                                 onChange={e => handleChange('yolo_model', e.target.value)}
@@ -144,7 +144,7 @@ export default function SettingsPage() {
 
                         <div>
                             <div className="flex justify-between mb-2">
-                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Detection Confidence</label>
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Detection Confidence</label>
                                 <span className="text-white font-mono text-sm font-bold">{settings.confidence_threshold}%</span>
                             </div>
                             <input type="range" min="10" max="100" value={settings.confidence_threshold}
@@ -153,7 +153,7 @@ export default function SettingsPage() {
 
                         <div>
                             <div className="flex justify-between mb-2">
-                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Ambulance Confidence</label>
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Ambulance Confidence</label>
                                 <span className="text-white font-mono text-sm font-bold">{settings.ambulance_confidence}%</span>
                             </div>
                             <input type="range" min="10" max="100" value={settings.ambulance_confidence}
@@ -177,7 +177,7 @@ export default function SettingsPage() {
                             <div key={key} className="flex items-center gap-4">
                                 <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
                                 <div className="flex-1">
-                                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">{label}</label>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">{label}</label>
                                     <div className="flex items-center gap-3">
                                         <input
                                             type="number" min="5" max="120"
@@ -185,7 +185,7 @@ export default function SettingsPage() {
                                             onChange={e => handleChange(key, e.target.value)}
                                             className="flex-1 bg-[#0a0a0a] border border-white/[0.08] rounded-xl px-4 py-2.5 text-white focus:border-[#E50914]/50 outline-none text-sm font-mono"
                                         />
-                                        <span className="text-[10px] text-gray-600 uppercase tracking-wider font-bold shrink-0">sec</span>
+                                        <span className="text-xs text-gray-600 uppercase tracking-wider font-bold shrink-0">sec</span>
                                     </div>
                                 </div>
                             </div>
@@ -216,7 +216,7 @@ export default function SettingsPage() {
                                         <w.icon className="w-4 h-4" />
                                         <span className="font-bold text-sm">{w.label}</span>
                                     </div>
-                                    <div className="text-[10px] opacity-60 font-mono">{w.desc}</div>
+                                    <div className="text-xs opacity-60 font-mono">{w.desc}</div>
                                 </button>
                             );
                         })}
@@ -248,7 +248,7 @@ export default function SettingsPage() {
                         ))}
 
                         <div className="pt-4 border-t border-white/[0.06]">
-                            <label className="block text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-wider">Data Retention</label>
+                            <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">Data Retention</label>
                             <select
                                 value={settings.data_retention}
                                 onChange={e => handleChange('data_retention', e.target.value)}
@@ -279,7 +279,7 @@ export default function SettingsPage() {
 
                 <div className="overflow-x-auto tv-scrollbar">
                     <table className="w-full text-left">
-                        <thead className="bg-[#0d0d0d] text-[9px] uppercase text-gray-600 tracking-widest">
+                        <thead className="bg-[#0d0d0d] text-xs uppercase text-gray-600 tracking-widest">
                             <tr>
                                 <th className="px-5 py-3 font-bold">Timestamp</th>
                                 <th className="px-5 py-3 font-bold">Admin</th>
@@ -304,12 +304,12 @@ export default function SettingsPage() {
                                         <td className="px-5 py-3 text-gray-500 font-mono text-xs whitespace-nowrap">{log.timestamp}</td>
                                         <td className="px-5 py-3 text-white font-medium text-sm">{log.user}</td>
                                         <td className="px-5 py-3">
-                                            <span className={`px-3 py-1 text-[9px] font-bold rounded-md uppercase tracking-wider border ${badgeColor}`}>
+                                            <span className={`px-3 py-1 text-xs font-bold rounded-md uppercase tracking-wider border ${badgeColor}`}>
                                                 {log.action.replace(/_/g, ' ')}
                                             </span>
                                         </td>
                                         <td className="px-5 py-3 text-gray-500 max-w-sm truncate text-xs">{log.details || '—'}</td>
-                                        <td className="px-5 py-3 text-gray-600 font-mono text-[11px]">{log.ip || '—'}</td>
+                                        <td className="px-5 py-3 text-gray-600 font-mono text-xs">{log.ip || '—'}</td>
                                     </tr>
                                 );
                             })}

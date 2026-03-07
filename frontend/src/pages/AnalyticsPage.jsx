@@ -42,7 +42,7 @@ function AnimatedStat({ value, label, icon: Icon, color }) {
                 <div className={`p-2.5 rounded-xl bg-opacity-10`} style={{ backgroundColor: `${color}15` }}>
                     <Icon className="w-5 h-5" style={{ color }} />
                 </div>
-                <div className="text-[9px] font-bold text-gray-600 uppercase tracking-widest text-right max-w-[80px]">{label}</div>
+                <div className="text-xs font-bold text-gray-600 uppercase tracking-widest text-right max-w-[80px]">{label}</div>
             </div>
             <div className="text-3xl font-black text-white tabular-nums">{display}</div>
         </motion.div>
@@ -79,7 +79,7 @@ export default function AnalyticsPage() {
             <div className="flex h-full items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
                     <div className="w-10 h-10 rounded-full border-2 border-[#E50914]/20 border-t-[#E50914] animate-spin" />
-                    <p className="text-[10px] text-gray-600 uppercase tracking-[0.3em] font-bold">Loading Analytics</p>
+                    <p className="text-xs text-gray-600 uppercase tracking-[0.3em] font-bold">Loading Analytics</p>
                 </div>
             </div>
         );
@@ -242,7 +242,7 @@ export default function AnalyticsPage() {
     const totalVehiclesTracked = trend.reduce((sum, t) => sum + t.count, 0);
 
     return (
-        <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
+        <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-6">
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-[#181818] border border-white/[0.06] rounded-2xl p-6 shadow-lg relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-72 h-72 bg-[#0071EB]/[0.03] rounded-bl-[120px] pointer-events-none" />
@@ -292,7 +292,7 @@ export default function AnalyticsPage() {
                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                             <div className="text-center">
                                 <div className="text-2xl font-black text-white">{distValues.reduce((a, b) => a + b, 0)}</div>
-                                <div className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">Total</div>
+                                <div className="text-xs text-gray-500 font-bold uppercase tracking-widest">Total</div>
                             </div>
                         </div>
                     </div>
@@ -307,7 +307,7 @@ export default function AnalyticsPage() {
                             <TrendingUp className="w-4 h-4 text-[#0071EB]" /> Traffic Predictions
                         </h2>
                         {predictions?.model && (
-                            <span className="text-[9px] bg-[#0071EB]/10 text-[#0071EB] px-2 py-1 rounded font-bold tracking-wider border border-[#0071EB]/20">
+                            <span className="text-xs bg-[#0071EB]/10 text-[#0071EB] px-2 py-1 rounded font-bold tracking-wider border border-[#0071EB]/20">
                                 {predictions.model}
                             </span>
                         )}
@@ -324,9 +324,9 @@ export default function AnalyticsPage() {
                         <div className="grid grid-cols-3 gap-2 mt-4">
                             {predList.slice(0, 3).map((p, i) => (
                                 <div key={i} className="bg-white/[0.02] border border-white/[0.04] rounded-lg p-3 text-center">
-                                    <div className="text-[10px] text-gray-500 font-bold">{p.label}</div>
+                                    <div className="text-xs text-gray-500 font-bold">{p.label}</div>
                                     <div className="text-lg font-black text-white">{p.avg_vehicles}</div>
-                                    <div className={`text-[9px] font-bold uppercase tracking-wider mt-1`} style={{ color: p.color }}>{p.level}</div>
+                                    <div className={`text-xs font-bold uppercase tracking-wider mt-1`} style={{ color: p.color }}>{p.level}</div>
                                 </div>
                             ))}
                         </div>
