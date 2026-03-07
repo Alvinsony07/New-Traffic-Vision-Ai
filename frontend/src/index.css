@@ -1,5 +1,533 @@
 @import "tailwindcss";
+
+/* ═══════════════════════════════════════════════
+   TRAFFIC VISION AI — Netflix-Inspired Design System
+   ═══════════════════════════════════════════════ */
+
 @layer base {
-  :root { --background: #050505; --foreground: #ffffff; --accent: #e50914; --accent-dim: rgba(229, 9, 20, 0.15); }
-  body { background-color: var(--background); color: var(--foreground); margin: 0; overflow-x: hidden; }
+  :root {
+    /* Netflix Color Palette */
+    --bg-primary: #141414;
+    --bg-secondary: #1a1a1a;
+    --bg-elevated: #181818;
+    --bg-card: #1c1c1c;
+    --bg-card-hover: #252525;
+    --bg-input: #2a2a2a;
+    --bg-surface: #0a0a0a;
+
+    /* Accent Colors */
+    --accent: #E50914;
+    --accent-hover: #B20710;
+    --accent-dim: rgba(229, 9, 20, 0.15);
+    --accent-glow: rgba(229, 9, 20, 0.4);
+
+    /* Netflix Functional Colors */
+    --netflix-green: #46D369;
+    --netflix-orange: #E87C03;
+    --netflix-blue: #0071EB;
+    --netflix-yellow: #F5C518;
+    --netflix-purple: #9B59B6;
+
+    /* Text */
+    --text-primary: #FFFFFF;
+    --text-secondary: #B3B3B3;
+    --text-muted: #808080;
+    --text-dim: #5a5a5a;
+
+    /* Borders */
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-default: rgba(255, 255, 255, 0.12);
+    --border-strong: rgba(255, 255, 255, 0.2);
+
+    /* Shadows */
+    --shadow-card: 0 8px 30px rgba(0, 0, 0, 0.6);
+    --shadow-elevated: 0 16px 60px rgba(0, 0, 0, 0.8);
+    --shadow-red-glow: 0 0 30px rgba(229, 9, 20, 0.3);
+    --shadow-green-glow: 0 0 20px rgba(70, 211, 105, 0.3);
+    --shadow-blue-glow: 0 0 20px rgba(0, 113, 235, 0.3);
+
+    /* Typography */
+    --font-display: 'Bebas Neue', 'Impact', sans-serif;
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+    /* Transitions */
+    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-smooth: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-spring: 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  /* Reset & Globals */
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    margin: 0;
+    overflow-x: hidden;
+    line-height: 1.6;
+  }
+
+  /* Selection */
+  ::selection {
+    background-color: var(--accent);
+    color: white;
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   SCROLLBAR — Netflix-style thin scrollbar
+   ═══════════════════════════════════════════════ */
+@layer utilities {
+
+  .custom-scrollbar::-webkit-scrollbar,
+  .tv-scrollbar::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track,
+  .tv-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb,
+  .tv-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    transition: background var(--transition-fast);
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover,
+  .tv-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.25);
+  }
+
+  /* Firefox */
+  .custom-scrollbar,
+  .tv-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   ANIMATIONS — Micro-interactions & Netflix feel
+   ═══════════════════════════════════════════════ */
+@layer utilities {
+
+  /* Netflix shimmer loading */
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  .animate-shimmer {
+    background: linear-gradient(90deg, var(--bg-elevated) 25%, #2a2a2a 50%, var(--bg-elevated) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+
+  /* Pulse glow */
+  @keyframes pulseGlow {
+
+    0%,
+    100% {
+      box-shadow: 0 0 5px rgba(229, 9, 20, 0.3);
+    }
+
+    50% {
+      box-shadow: 0 0 20px rgba(229, 9, 20, 0.6);
+    }
+  }
+
+  .animate-pulse-glow {
+    animation: pulseGlow 2s ease-in-out infinite;
+  }
+
+  /* Netflix red pulse */
+  @keyframes redPulse {
+
+    0%,
+    100% {
+      opacity: 1;
+    }
+
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  .animate-red-pulse {
+    animation: redPulse 1.5s ease-in-out infinite;
+  }
+
+  /* Slide up entrance */
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.5s ease-out forwards;
+  }
+
+  /* Float */
+  @keyframes float {
+
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+
+    50% {
+      transform: translateY(-6px);
+    }
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  /* Number counter spin */
+  @keyframes countSpin {
+    from {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  .animate-count {
+    animation: countSpin 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
+  /* Gradient sweep */
+  @keyframes gradientSweep {
+    0% {
+      background-position: 0% 50%;
+    }
+
+    50% {
+      background-position: 100% 50%;
+    }
+
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  .animate-gradient {
+    background-size: 200% 200%;
+    animation: gradientSweep 6s ease infinite;
+  }
+
+  /* Spotlight/beam effect */
+  @keyframes spotlight {
+    0% {
+      transform: translateX(-100%) rotate(-45deg);
+    }
+
+    100% {
+      transform: translateX(300%) rotate(-45deg);
+    }
+  }
+
+  .animate-spotlight {
+    animation: spotlight 3s ease-in-out infinite;
+  }
+
+  /* Breathing ring */
+  @keyframes breathe {
+
+    0%,
+    100% {
+      transform: scale(1);
+      opacity: 0.5;
+    }
+
+    50% {
+      transform: scale(1.15);
+      opacity: 0.8;
+    }
+  }
+
+  .animate-breathe {
+    animation: breathe 2s ease-in-out infinite;
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   CARD STYLES — Netflix-inspired elevation
+   ═══════════════════════════════════════════════ */
+@layer components {
+  .tv-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    box-shadow: var(--shadow-card);
+    transition: all var(--transition-smooth);
+  }
+
+  .tv-card:hover {
+    border-color: var(--border-default);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-elevated);
+  }
+
+  .tv-card-glass {
+    background: rgba(24, 24, 24, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--border-subtle);
+    border-radius: 16px;
+  }
+
+  /* Netflix-style red CTA button */
+  .tv-btn-primary {
+    background: var(--accent);
+    color: white;
+    font-weight: 700;
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition-smooth);
+    box-shadow: var(--shadow-red-glow);
+    letter-spacing: 0.02em;
+  }
+
+  .tv-btn-primary:hover {
+    background: var(--accent-hover);
+    box-shadow: 0 0 40px rgba(229, 9, 20, 0.5);
+    transform: translateY(-1px);
+  }
+
+  .tv-btn-primary:active {
+    transform: translateY(0);
+  }
+
+  .tv-btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* Ghost buttons */
+  .tv-btn-ghost {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: 1px solid var(--border-subtle);
+    cursor: pointer;
+    transition: all var(--transition-smooth);
+  }
+
+  .tv-btn-ghost:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--border-default);
+  }
+
+  /* Input fields */
+  .tv-input {
+    width: 100%;
+    background: var(--bg-input);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 12px 16px;
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 14px;
+    transition: all var(--transition-smooth);
+    outline: none;
+  }
+
+  .tv-input::placeholder {
+    color: var(--text-dim);
+  }
+
+  .tv-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.15);
+  }
+
+  /* Status badges */
+  .tv-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .tv-badge-red {
+    background: rgba(229, 9, 20, 0.15);
+    color: #E50914;
+    border: 1px solid rgba(229, 9, 20, 0.3);
+  }
+
+  .tv-badge-green {
+    background: rgba(70, 211, 105, 0.15);
+    color: #46D369;
+    border: 1px solid rgba(70, 211, 105, 0.3);
+  }
+
+  .tv-badge-yellow {
+    background: rgba(232, 124, 3, 0.15);
+    color: #E87C03;
+    border: 1px solid rgba(232, 124, 3, 0.3);
+  }
+
+  .tv-badge-blue {
+    background: rgba(0, 113, 235, 0.15);
+    color: #0071EB;
+    border: 1px solid rgba(0, 113, 235, 0.3);
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   HEADING TYPOGRAPHY — Bebas Neue display font
+   ═══════════════════════════════════════════════ */
+@layer base {
+
+  h1.tv-display,
+  .tv-display {
+    font-family: var(--font-display);
+    letter-spacing: 0.04em;
+    line-height: 1.1;
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   LEAFLET MAP OVERRIDES — Dark theme popups
+   ═══════════════════════════════════════════════ */
+.leaflet-popup-content-wrapper {
+  background: var(--bg-elevated) !important;
+  color: var(--text-primary) !important;
+  border-radius: 12px !important;
+  border: 1px solid var(--border-default) !important;
+  box-shadow: var(--shadow-elevated) !important;
+}
+
+.leaflet-popup-tip {
+  background: var(--bg-elevated) !important;
+}
+
+.leaflet-popup-close-button {
+  color: var(--text-muted) !important;
+}
+
+.leaflet-control-zoom a {
+  background: var(--bg-elevated) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-subtle) !important;
+}
+
+/* ═══════════════════════════════════════════════
+   RANGE INPUT — Netflix-styled sliders
+   ═══════════════════════════════════════════════ */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  width: 100%;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-track {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  margin-top: -7px;
+  box-shadow: 0 0 10px rgba(229, 9, 20, 0.5);
+  transition: box-shadow var(--transition-fast);
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  box-shadow: 0 0 20px rgba(229, 9, 20, 0.8);
+}
+
+input[type="range"]::-moz-range-track {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  border: none;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: none;
+  box-shadow: 0 0 10px rgba(229, 9, 20, 0.5);
+}
+
+/* ═══════════════════════════════════════════════
+   GLOBAL TRANSITION — smooth page behavior
+   ═══════════════════════════════════════════════ */
+a,
+button,
+input,
+select,
+textarea {
+  transition: all var(--transition-smooth);
+}
+
+/* Hide number input spinners */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* ── Leaflet Custom Marker Icons ── */
+.custom-div-icon {
+  background: transparent !important;
+  border: none !important;
 }

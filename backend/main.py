@@ -6,6 +6,7 @@ Run with:
 """
 import threading
 import time
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -19,36 +20,8 @@ from app.auth import hash_password
 from app.ai.signal_controller import SignalController
 from app.ai.video_processor import VideoProcessor
 from app.ai.traffic_logic import TrafficLogic
-from app.config import settings
 # ── Create all tables ──
 Base.metadata.create_all(bind=engine)
-
-# ── FastAPI App ──
-app = FastAPI(
-    title="Traffic Vision AI",
-    description="Intelligent Traffic Monitoring & Analytics API",
-    version="2.0.0",
-    docs_url="/api/docs",
-    redoc_url="/api/redoc",
-)
-
-# ── CORS (allow the React dev server) ──
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.cors_origins_list,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# ── Register routers ──
-from app.routers import auth, dashboard, analytics, dispatch, settings as settings_router
-
-app.include_router(auth.router)
-app.include_router(dashboard.router)
-app.include_router(analytics.router)
-app.include_router(dispatch.router)
-app.include_router(settings_router.router)
 
 # ── Shared instances (populated on startup) ──
 signal_controller = None
@@ -56,9 +29,10 @@ video_processor = None
 traffic_logic = None
 
 
-# ── Startup: seed admin & start background timer ──
-@app.on_event("startup")
-def on_startup():
+# ── Lifespan: replaces deprecated @app.on_event("startup") ──
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Modern lifespan handler — runs setup on startup, cleanup on shutdown."""
     from app.database import SessionLocal
 
     # Seed admin user
@@ -90,6 +64,8 @@ def on_startup():
         # Start streams with no initial video feeds (dummy mode until UI triggers it)
         video_processor.start_streams([None, None, None, None])
         
+        # Import here to avoid circular imports at module level
+        from app.routers import dashboard
         dashboard.set_runtime_refs(signal_controller, video_processor)
         print("✅ AI Components (YOLO, Signal Controller) initialized successfully")
     except Exception as e:
@@ -97,6 +73,7 @@ def on_startup():
         # Setup fallbacks if models are completely missing
         signal_controller = SignalController(num_lanes=4)
         traffic_logic = TrafficLogic(settings)
+        from app.routers import dashboard
         dashboard.set_runtime_refs(signal_controller, None)
 
     # Background signal timer
@@ -122,6 +99,47 @@ def on_startup():
     t.start()
     print("✅ Signal controller & timer started")
     print("✅ FastAPI server ready — Swagger docs at /api/docs")
+
+    # ── Yield control to the application ──
+    yield
+
+    # ── Shutdown cleanup (runs when server stops) ──
+    print("🛑 Shutting down Traffic Vision AI...")
+    if video_processor:
+        try:
+            video_processor.stop_all()
+        except Exception:
+            pass
+    print("🛑 Cleanup complete")
+
+
+# ── FastAPI App ──
+app = FastAPI(
+    title="Traffic Vision AI",
+    description="Intelligent Traffic Monitoring & Analytics API",
+    version="2.0.0",
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
+    lifespan=lifespan,
+)
+
+# ── CORS (allow the React dev server) ──
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins_list,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# ── Register routers ──
+from app.routers import auth, dashboard, analytics, dispatch, settings as settings_router
+
+app.include_router(auth.router)
+app.include_router(dashboard.router)
+app.include_router(analytics.router)
+app.include_router(dispatch.router)
+app.include_router(settings_router.router)
 
 
 # ── Health check ──

@@ -1,7 +1,7 @@
 """
 Traffic Vision AI — SQLAlchemy ORM Models (PostgreSQL)
 """
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import (
     Column, Integer, String, Text, Float, Boolean, DateTime, ForeignKey
 )
@@ -24,8 +24,8 @@ class User(Base):
     role = Column(String(20), default="user")           # 'admin' | 'user'
     failed_login_attempts = Column(Integer, default=0)
     is_locked = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    password_changed_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    password_changed_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Relationships
     reports = relationship("AccidentReport", back_populates="user", lazy="dynamic")
@@ -42,7 +42,7 @@ class LaneStats(Base):
     lane_id = Column(Integer, nullable=False, index=True)   # 1–4
     vehicle_count = Column(Integer, default=0)
     density = Column(String(20))                             # Low | Medium | High
-    timestamp = Column(DateTime, default=datetime.utcnow, index=True)
+    timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
 
 
 class VehicleLog(Base):
@@ -52,7 +52,7 @@ class VehicleLog(Base):
     lane_id = Column(Integer, nullable=False)
     vehicle_type = Column(String(50), nullable=False)
     count = Column(Integer, default=1)
-    timestamp = Column(DateTime, default=datetime.utcnow)
+    timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
 class AmbulanceEvent(Base):
@@ -60,7 +60,7 @@ class AmbulanceEvent(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     lane_id = Column(Integer, nullable=False)
-    timestamp = Column(DateTime, default=datetime.utcnow)
+    timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     resolved_at = Column(DateTime, nullable=True)
 
 
@@ -77,7 +77,7 @@ class AccidentReport(Base):
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
     status = Column(String(20), default="Reported")          # Reported | Verified | Resolved
-    timestamp = Column(DateTime, default=datetime.utcnow)
+    timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     user = relationship("User", back_populates="reports")
     dispatches = relationship("DispatchLog", back_populates="report", lazy="dynamic")
@@ -95,7 +95,7 @@ class DispatchLog(Base):
     accident_lng = Column(Float, nullable=True)
     distance_km = Column(Float, nullable=True)
     status = Column(String(20), default="Dispatched")        # Dispatched | En Route | Arrived | ...
-    timestamp = Column(DateTime, default=datetime.utcnow)
+    timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     report = relationship("AccidentReport", back_populates="dispatches")
 
@@ -111,7 +111,7 @@ class AuditLog(Base):
     action = Column(String(100), nullable=False)
     details = Column(Text, nullable=True)
     ip_address = Column(String(45), nullable=True)
-    timestamp = Column(DateTime, default=datetime.utcnow)
+    timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     user = relationship("User", back_populates="audit_logs")
 
@@ -122,4 +122,4 @@ class SystemSetting(Base):
     id = Column(Integer, primary_key=True, index=True)
     key = Column(String(100), unique=True, nullable=False)
     value = Column(Text, nullable=True)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
