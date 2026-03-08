@@ -1,11 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import { auth } from '../api/client';
+import { useAuth } from '../context/AuthContext';
 import { AlertCircle, Eye, EyeOff, Loader2, UserPlus, Shield, Check, Zap } from 'lucide-react';
 
 export default function RegisterPage() {
+    const { user } = useAuth();
     const navigate = useNavigate();
+
+    useEffect(() => {
+        if (user) {
+            if (user.role === 'admin') navigate('/dashboard');
+            else if (user.role === 'ambulance_driver') navigate('/ambulance');
+            else navigate('/user-portal');
+        }
+    }, [user, navigate]);
+
     const [formData, setFormData] = useState({
         username: '',
         full_name: '',

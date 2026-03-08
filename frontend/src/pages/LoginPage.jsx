@@ -88,16 +88,26 @@ export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const { login } = useAuth();
+    const { login, user } = useAuth();
     const navigate = useNavigate();
+
+    useEffect(() => {
+        if (user) {
+            if (user.role === 'admin') navigate('/dashboard');
+            else if (user.role === 'ambulance_driver') navigate('/ambulance');
+            else navigate('/user-portal');
+        }
+    }, [user, navigate]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
         setLoading(true);
         try {
-            await login(username, password);
-            navigate('/');
+            const me = await login(username, password);
+            if (me.role === 'admin') navigate('/dashboard');
+            else if (me.role === 'ambulance_driver') navigate('/ambulance');
+            else navigate('/user-portal');
         } catch (err) {
             setError(err.message || 'Login failed');
         } finally {
@@ -127,9 +137,11 @@ export default function LoginPage() {
                     transition={{ delay: 0.2, duration: 0.5 }}
                     className="text-center mb-10"
                 >
-                    <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-[#E50914] to-[#8B0000] flex items-center justify-center font-black text-white text-2xl shadow-[0_0_40px_rgba(229,9,20,0.5)] mb-5" style={{ fontFamily: 'var(--font-display)' }}>
-                        T
-                    </div>
+                    <Link to="/" className="inline-block hover:scale-110 active:scale-90 transition-transform duration-300">
+                        <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-[#E50914] to-[#8B0000] flex items-center justify-center font-black text-white text-2xl shadow-[0_0_40px_rgba(229,9,20,0.5)] mb-5" style={{ fontFamily: 'var(--font-display)' }}>
+                            T
+                        </div>
+                    </Link>
                     <h1 className="text-4xl font-black text-white tracking-[0.06em] mb-2" style={{ fontFamily: 'var(--font-display)' }}>
                         TRAFFIC<span className="text-[#E50914]"> AI</span>
                     </h1>

@@ -16,7 +16,7 @@ export default function Sidebar() {
     const confirmLogout = () => {
         setShowLogoutModal(false);
         logout();
-        navigate('/login');
+        navigate('/');
     };
 
     if (!user) return null;

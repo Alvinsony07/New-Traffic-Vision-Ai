@@ -13,6 +13,7 @@ import CameraConfigPage from './pages/CameraConfigPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import ReportsPage from './pages/ReportsPage';
 import AmbulanceDriverPage from './pages/AmbulanceDriverPage';
+import LandingPage from './pages/LandingPage';
 import { Loader2, Video, AlertTriangle, Car, Gauge, Timer, Siren, Clock, Settings } from 'lucide-react';
 import { dashboard } from './api/client';
 
@@ -376,7 +377,6 @@ function AppLayout() {
                 </div>
               </div>
             } />
-            <Route path="/" element={<RoleRedirect />} />
             <Route path="*" element={
               <div className="flex items-center justify-center h-full">
                 <div className="text-center">
@@ -399,6 +399,7 @@ function App() {
       <AuthProvider>
         <Router>
           <Routes>
+            <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/*" element={<AppLayout />} />
