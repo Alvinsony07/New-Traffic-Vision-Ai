@@ -220,14 +220,6 @@ export default function LoginPage() {
                     </form>
 
                     <div className="text-center mt-7 space-y-3 text-sm">
-                        <div className="flex items-center gap-2 justify-center text-gray-600 text-xs">
-                            <div className="h-px flex-1 bg-white/5" />
-                            <span className="uppercase tracking-widest font-bold">Demo Access</span>
-                            <div className="h-px flex-1 bg-white/5" />
-                        </div>
-                        <p className="text-gray-500 text-xs font-mono">
-                            admin / admin123
-                        </p>
                         <p className="text-gray-400 pt-2">
                             Don't have an account? <Link to="/register" className="text-[#E50914] font-bold hover:underline hover:text-red-400 transition-colors">Sign Up</Link>
                         </p>
