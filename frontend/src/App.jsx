@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider, useToast } from './context/ToastContext';
@@ -13,7 +13,7 @@ import CameraConfigPage from './pages/CameraConfigPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import ReportsPage from './pages/ReportsPage';
 import AmbulanceDriverPage from './pages/AmbulanceDriverPage';
-import { Loader2, Video, AlertTriangle, Car, Gauge, Timer, Siren } from 'lucide-react';
+import { Loader2, Video, AlertTriangle, Car, Gauge, Timer, Siren, Clock, Settings } from 'lucide-react';
 import { dashboard } from './api/client';
 
 // ── Animated Counter ──
@@ -78,6 +78,9 @@ function Home() {
   const { user } = useAuth();
   const { addToast } = useToast();
   const [data, setData] = useState(null);
+  const navigate = useNavigate();
+  const [lastAmbulanceState, setLastAmbulanceState] = useState(false);
+  const [sessionTime] = useState(Date.now());
 
   useEffect(() => {
     const fetchData = async () => {
@@ -90,6 +93,17 @@ function Home() {
     const interval = setInterval(fetchData, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    const ambulanceActive = data?.signal_status?.ambulance_mode || false;
+    if (ambulanceActive && !lastAmbulanceState) {
+      addToast("EMERGENCY VEHICLE DETECTED! Overriding traffic signals.", "error");
+
+      // Trigger a browser-level alert pop-up for immediate, unavoidable attention
+      setTimeout(() => alert("CRITICAL ALERT: Emergency Vehicle Detected. Signals overridden."), 100);
+    }
+    setLastAmbulanceState(ambulanceActive);
+  }, [data, lastAmbulanceState, addToast]);
 
   const handleOverride = async (lane) => {
     try {
@@ -127,6 +141,17 @@ function Home() {
           <p className="text-gray-500 text-sm font-medium">Real-time traffic flow, anomaly detection, and adaptive signal control.</p>
         </div>
         <div className="flex gap-3 flex-wrap">
+
+          {user?.role === 'admin' && (
+            <button
+              onClick={() => navigate('/camera')}
+              className="px-4 py-2 bg-[#0071EB]/10 text-[#0071EB] hover:bg-[#0071EB]/20 hover:text-white border border-[#0071EB]/30 rounded-xl flex items-center gap-2 font-bold text-xs uppercase tracking-widest transition-all shadow-[0_0_15px_rgba(0,113,235,0.15)]"
+            >
+              <Settings className="w-4 h-4 shrink-0" />
+              Configure Sources
+            </button>
+          )}
+
           {/* Stats Pills */}
           <div className="px-4 py-2 bg-[#181818] border border-white/[0.06] rounded-xl flex items-center gap-3">
             <Car className="w-4 h-4 text-[#0071EB]" />
@@ -195,10 +220,10 @@ function Home() {
               {/* Video Feed */}
               <div className="aspect-video bg-[#0a0a0a] relative flex items-center justify-center border-b border-white/[0.04] overflow-hidden">
                 <img
-                  src={`/api/video_feed/${i}`}
+                  src={`/api/video_feed/${i}?t=${sessionTime}`}
                   className="w-full h-full object-cover z-10 relative"
                   alt={`Lane ${i + 1} Feed`}
-                  onError={(e) => { e.target.style.opacity = '0'; }}
+                  onError={(e) => { e.target.style.opacity = '0'; setTimeout(() => e.target.src = `/api/video_feed/${i}?t=${Date.now()}`, 5000); }}
                   onLoad={(e) => { e.target.style.opacity = '1'; }}
                   style={{ opacity: 0, transition: 'opacity 0.5s ease-in-out' }}
                 />
@@ -290,15 +315,41 @@ function PageTransition({ children }) {
   );
 }
 
+// ── Top Bar with Live Clock ──
+function TopBar() {
+  const [time, setTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="flex justify-between items-center px-6 lg:px-8 py-4 bg-[#0a0a0a] border-b border-white/[0.04] sticky top-0 z-50 shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
+      <div></div>
+      <div className="flex items-center gap-2">
+        <Clock className="w-4 h-4 text-[#0071EB]" />
+        <span className="text-xs text-gray-500 uppercase tracking-widest font-bold hidden md:inline-block mr-2 mt-[2px]">Live System Clock</span>
+        <span className="text-white font-mono text-sm tracking-widest bg-white/[0.04] px-3 py-1.5 rounded-lg border border-white/[0.06]">
+          {time.toLocaleTimeString('en-US', { hour12: true, hour: 'numeric', minute: '2-digit', second: '2-digit' })}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 // ── App Layout ──
 function AppLayout() {
   return (
     <div className="flex h-screen bg-[#141414] text-white overflow-hidden" style={{ fontFamily: 'var(--font-body)' }}>
       <Sidebar />
-      <main className="flex-1 overflow-y-auto relative tv-scrollbar">
+      <main className="flex-1 overflow-y-auto relative tv-scrollbar flex flex-col">
         {/* Netflix-style top gradient */}
         <div className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-[#E50914]/[0.04] to-transparent pointer-events-none z-0" />
-        <div className="relative z-10 h-full">
+
+        <TopBar />
+
+        <div className="relative z-10 flex-1">
           <Routes>
             <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['admin']}><PageTransition><Home /></PageTransition></ProtectedRoute>} />
             <Route path="/analytics" element={<ProtectedRoute allowedRoles={['admin']}><PageTransition><AnalyticsPage /></PageTransition></ProtectedRoute>} />

@@ -55,10 +55,26 @@ class VideoProcessor:
         Main processing loop.
         Reads frames from all active sources, runs detection, updates stats.
         """
+        fps_infos = {}
+        for i in range(4):
+            fps_infos[i] = {
+                'frame_time': 0.033, # Default 30 fps
+                'last_read': 0,
+                'frame_count': 0,
+                'is_file': False
+            }
+            if self.caps[i] and self.caps[i].isOpened():
+                if self.sources[i]:
+                    # Checking if it's a local video upload/file to enable looping
+                    src = str(self.sources[i])
+                    fps_infos[i]['is_file'] = not src.isdigit() and not src.startswith(('rtsp://', 'http://'))
+                
+                fps = self.caps[i].get(cv2.CAP_PROP_FPS)
+                if fps and fps > 0 and fps < 120:
+                    fps_infos[i]['frame_time'] = 1.0 / fps
+
         # Optimization: Run detection every N frames
-        # Staggered: 4 lanes, Interval 4 means 1 lane processed per frame
         DETECT_INTERVAL = 4 
-        frame_count = 0
         
         cached_boxes = {i: {'vehicles': [], 'ambulance': []} for i in range(4)}
         
@@ -66,28 +82,44 @@ class VideoProcessor:
         current_signal_logic = self.signal_controller
         
         while self.running:
-            # Loop delay to stabilize FPS around 30
-            start_time = time.time()
+            # Fast global polling loop, prevents 100% CPU while letting individual cameras run at their own max FPS
+            time.sleep(0.01) 
             
             for i in range(4):
                 try:
                     if self.caps[i] and self.caps[i].isOpened():
-                        ret, raw_frame = self.caps[i].read()
-                        if not ret:
-                            # Stream ended or camera disconnected — stop this lane
-                            # (For live cameras/RTSP streams this means connection lost)
-                            # (For video files this means the file finished playing)
-                            print(f"Lane {i}: Stream ended or disconnected.")
-                            self.caps[i].release()
-                            self.caps[i] = None
+                        finfo = fps_infos[i]
+                        now = time.time()
+                        
+                        # Throttle based on original FPS (e.g. 1/60th second vs 1/30th)
+                        if now - finfo['last_read'] < finfo['frame_time']:
                             continue
                             
+                        ret, raw_frame = self.caps[i].read()
+                        
+                        if not ret:
+                            if finfo['is_file']:
+                                # Loop local video files automatically
+                                self.caps[i].set(cv2.CAP_PROP_POS_FRAMES, 0)
+                                ret, raw_frame = self.caps[i].read()
+                                if not ret:
+                                    self.caps[i].release()
+                                    self.caps[i] = None
+                                    continue
+                            else:
+                                print(f"Lane {i}: Stream ended or disconnected.")
+                                self.caps[i].release()
+                                self.caps[i] = None
+                                continue
+
+                        finfo['last_read'] = time.time()
+                        finfo['frame_count'] += 1
+                        
                         # Downscale
                         frame = cv2.resize(raw_frame, (480, 270))
                         
                         # -- STAGGERED DETECTION LOGIC --
-                        # Only process 1 lane per frame to distribute load
-                        if (frame_count + i) % DETECT_INTERVAL == 0:
+                        if (finfo['frame_count'] + i) % DETECT_INTERVAL == 0:
                             
                             # 1. Detect All Vehicles (No drawing yet)
                             # We get vehicle_boxes: [{'coords':(x1,y1,x2,y2), ...}]
@@ -172,22 +204,14 @@ class VideoProcessor:
                     continue
 
             # Update Signal Controller (Check if ANY lane has ambulance)
-            # We check specific lanes. If Staggered, we might have stale data for 3 frames, which is fine (100ms lag)
             ambulance_lane = -1
             for lid, active in enumerate(self.ambulance_active):
                 if active:
                     ambulance_lane = lid
                     break
             
-            if current_signal_logic and (frame_count % DETECT_INTERVAL == 0):
+            if current_signal_logic:
                 current_signal_logic.set_ambulance_event(ambulance_lane, ambulance_lane != -1)
-            
-            frame_count += 1
-            
-            # FPS Limiter
-            elapsed = time.time() - start_time
-            if elapsed < 0.033: # Target ~30 FPS
-                time.sleep(0.033 - elapsed)
 
     def get_frame(self, lane_id):
         return self.frame_data.get(lane_id)
