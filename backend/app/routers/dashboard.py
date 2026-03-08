@@ -139,6 +139,7 @@ def _gen_frames(lane_id: int):
             idle = 0
             yield (b"--frame\r\n"
                    b"Content-Type: image/jpeg\r\n\r\n" + frame_bytes + b"\r\n")
+            time.sleep(0.04)  # ~25 FPS lock to prevent browser socket hanging
         else:
             idle += 1
             if idle > 300:

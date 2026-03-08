@@ -99,8 +99,16 @@ function Home() {
     if (ambulanceActive && !lastAmbulanceState) {
       addToast("EMERGENCY VEHICLE DETECTED! Overriding traffic signals.", "error");
 
-      // Trigger a browser-level alert pop-up for immediate, unavoidable attention
-      setTimeout(() => alert("CRITICAL ALERT: Emergency Vehicle Detected. Signals overridden."), 100);
+      // Trigger a voice command instead of a blocking alert popup
+      if ('speechSynthesis' in window) {
+        // Cancel any ongoing speech to prioritize the emergency alert
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance("Critical Alert. Emergency vehicle detected. Traffic signals overridden.");
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
+        window.speechSynthesis.speak(utterance);
+      }
     }
     setLastAmbulanceState(ambulanceActive);
   }, [data, lastAmbulanceState, addToast]);
@@ -131,9 +139,9 @@ function Home() {
   };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-6 lg:p-8 pb-20">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-4 lg:p-6 pb-12">
       {/* Header */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-5 gap-4">
         <div>
           <h2 className="text-3xl font-black tracking-[0.04em] text-white mb-1" style={{ fontFamily: 'var(--font-display)' }}>
             LIVE SURVEILLANCE
@@ -181,7 +189,7 @@ function Home() {
       </div>
 
       {/* Lane Cards Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {[0, 1, 2, 3].map((i) => {
           const state = states[i];
           const lData = laneData[i] || { count: 0, density: 'Low', details: {} };
@@ -199,7 +207,7 @@ function Home() {
               className="bg-[#181818] rounded-2xl border border-white/[0.06] overflow-hidden flex flex-col shadow-[0_8px_30px_rgba(0,0,0,0.4)] hover:border-white/[0.1] transition-all group"
             >
               {/* Header */}
-              <div className="px-5 py-3.5 border-b border-white/[0.04] flex justify-between items-center bg-white/[0.01]">
+              <div className="px-4 py-2.5 border-b border-white/[0.04] flex justify-between items-center bg-white/[0.01]">
                 <div className="flex items-center gap-3">
                   <div className="bg-white/[0.06] p-2 rounded-lg group-hover:bg-white/[0.08] transition-colors">
                     <Video className="w-4 h-4 text-gray-400" />
@@ -218,10 +226,10 @@ function Home() {
               </div>
 
               {/* Video Feed */}
-              <div className="aspect-video bg-[#0a0a0a] relative flex items-center justify-center border-b border-white/[0.04] overflow-hidden">
+              <div className="aspect-[4/3] max-h-[280px] w-full bg-[#0a0a0a] relative flex items-center justify-center border-b border-white/[0.04] overflow-hidden p-0">
                 <img
                   src={`/api/video_feed/${i}?t=${sessionTime}`}
-                  className="w-full h-full object-cover z-10 relative"
+                  className="w-full h-full object-cover z-10 relative saturate-110"
                   alt={`Lane ${i + 1} Feed`}
                   onError={(e) => { e.target.style.opacity = '0'; setTimeout(() => e.target.src = `/api/video_feed/${i}?t=${Date.now()}`, 5000); }}
                   onLoad={(e) => { e.target.style.opacity = '1'; }}
@@ -252,7 +260,7 @@ function Home() {
               </div>
 
               {/* Data & Actions */}
-              <div className="p-5 flex justify-between items-center bg-gradient-to-b from-[#181818] to-[#141414]">
+              <div className="p-4 flex justify-between items-center bg-gradient-to-b from-[#181818] to-[#141414]">
                 <div className="flex gap-6">
                   {/* Vehicle Count */}
                   <div>
