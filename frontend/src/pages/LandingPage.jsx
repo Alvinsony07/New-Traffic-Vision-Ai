@@ -294,6 +294,11 @@ export default function LandingPage() {
                         <span className="font-black text-xl tracking-[0.05em] text-white flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
                             TRAFFIC<span className={theme === 'cyber' ? "text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500" : "text-[#E50914]"}> AI</span>
 
+                            <div className={`hidden md:flex items-center gap-1.5 px-2 py-0.5 rounded-sm border ml-2 ${theme === 'cyber' ? 'bg-cyan-500/10 border-cyan-500/30' : 'bg-[#E50914]/10 border-[#E50914]/30'}`}>
+                                <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${theme === 'cyber' ? 'bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]' : 'bg-[#E50914] shadow-[0_0_8px_rgba(229,9,20,0.8)]'}`} />
+                                <span className={`text-[9px] font-black tracking-widest uppercase ${theme === 'cyber' ? 'text-cyan-400' : 'text-[#E50914]'}`}>Live System</span>
+                            </div>
+
                             {/* Theme Toggle Switch */}
                             <button
                                 onClick={(e) => { e.stopPropagation(); setTheme(theme === 'cyber' ? 'netflix' : 'cyber'); }}
@@ -410,13 +415,13 @@ export default function LandingPage() {
                     transition={{ delay: 2, duration: 1 }}
                     className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 pointer-events-none"
                 >
-                    <span className="text-[10px] uppercase tracking-widest text-cyan-500/80 font-bold">Scroll to Explore</span>
+                    <span className={`text-[10px] uppercase tracking-widest font-bold ${theme === 'cyber' ? 'text-cyan-500/80' : 'text-gray-500/80'}`}>Scroll to Explore</span>
                     <motion.div
                         animate={{ y: [0, 10, 0] }}
                         transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-                        className="w-6 h-10 rounded-full border-2 border-cyan-500/40 flex justify-center p-1.5 backdrop-blur-md"
+                        className={`w-6 h-10 rounded-full border-2 flex justify-center p-1.5 backdrop-blur-md ${theme === 'cyber' ? 'border-cyan-500/40' : 'border-[#E50914]/40'}`}
                     >
-                        <div className="w-1.5 h-2.5 bg-cyan-400 rounded-full" />
+                        <div className={`w-1.5 h-2.5 rounded-full ${theme === 'cyber' ? 'bg-cyan-400' : 'bg-[#E50914]'}`} />
                     </motion.div>
                 </motion.div>
             </motion.main>
@@ -424,12 +429,14 @@ export default function LandingPage() {
             {/* Platform Capabilities */}
             <section ref={addToRefs} className="relative z-10 py-32 px-6 max-w-7xl mx-auto">
                 <div className="text-center mb-20 relative">
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[150px] bg-cyan-600/10 blur-[80px] pointer-events-none" />
+                    {theme === 'cyber' && (
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[150px] bg-cyan-600/10 blur-[80px] pointer-events-none" />
+                    )}
                     <h2
                         className="text-4xl md:text-6xl font-black text-white mb-6 uppercase tracking-tight relative z-10"
                         style={{ fontFamily: 'var(--font-display)' }}
                     >
-                        Core <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">Capabilities</span>
+                        Core <span className={theme === 'cyber' ? "text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500" : "text-[#E50914]"}>Capabilities</span>
                     </h2>
                     <p className="text-slate-400 text-lg max-w-2xl mx-auto font-medium">
                         Equipped with best-in-class deep learning algorithms for autonomous metropolitan management.
