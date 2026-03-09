@@ -62,18 +62,27 @@ const PORTALS = [
 const PIPELINE_STEPS = [
   {
     num: '01',
+    numColor: 'text-emerald-500/50',
+    topBorder: 'border-t-emerald-500/60',
+    glowColor: 'group-hover:border-t-emerald-500/80',
     title: 'Detect',
     desc: 'Live video from RTSP cameras or uploaded files is decoded by OpenCV. Every 4th frame is passed through the YOLOv8 Nano model, which detects and counts bicycles, cars, motorcycles, buses, and trucks across each configured lane. The detector also scans for ambulances using two methods: EasyOCR to read text labels ("AMBULANCE", "108", "EMS") and blue/red emergency light cluster detection in the upper vehicle region.',
     tech: ['YOLOv8 Nano', 'OpenCV', 'EasyOCR', 'Python'],
   },
   {
     num: '02',
+    numColor: 'text-amber-400/50',
+    topBorder: 'border-t-amber-400/60',
+    glowColor: 'group-hover:border-t-amber-400/80',
     title: 'Decide',
     desc: 'The signal controller reads vehicle counts from all lanes and calculates green-phase duration for each lane using a density-priority algorithm. The lane with the highest vehicle count gets the green light. Phase durations range from 10 to 180 seconds, scaled by count. A weather multiplier is also available (Rain ×1.25, Fog ×1.35, Snow ×1.50) to extend phases during poor visibility. All decisions are logged to the database.',
     tech: ['FastAPI', 'SQLAlchemy', 'PostgreSQL', 'Python logic'],
   },
   {
     num: '03',
+    numColor: 'text-red-500/50',
+    topBorder: 'border-t-red-500/60',
+    glowColor: 'group-hover:border-t-red-500/80',
     title: 'Override',
     desc: 'When an ambulance is detected in any lane, the system immediately preempts the standard schedule: the ambulance lane is forced to green and all other lanes are forced to red, creating a clear corridor. This override persists until the ambulance is no longer detected. Admins can also manually override any signal lane at any time from the Admin Portal. All overrides are recorded in the audit log.',
     tech: ['Preemption logic', 'JWT auth', 'Audit log', 'REST API'],
@@ -273,8 +282,8 @@ export default function AboutSystemPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 lg:gap-8">
             {PIPELINE_STEPS.map((step, i) => (
-              <FadeUp key={i} delay={i * 0.1} className="border border-white/[0.08] p-8 md:p-10 relative group hover:border-white/20 transition-colors duration-500">
-                <div className="text-[60px] font-syncopate font-bold text-white/[0.04] leading-none absolute top-6 right-8 select-none">
+              <FadeUp key={i} delay={i * 0.1} className={`border border-t-2 ${step.topBorder} ${step.glowColor} border-white/[0.08] p-8 md:p-10 relative group hover:border-white/20 transition-all duration-500`}>
+                <div className={`text-[60px] font-syncopate font-bold ${step.numColor} leading-none absolute top-6 right-8 select-none transition-all duration-500`}>
                   {step.num}
                 </div>
                 <h3 className="text-2xl md:text-3xl font-syncopate font-bold tracking-wide mb-6 text-white">
