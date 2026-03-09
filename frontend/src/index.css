@@ -1,4 +1,10 @@
+@import url('https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
+
+@theme {
+  --font-syncopate: 'Syncopate', sans-serif;
+  --font-inter: 'Inter', sans-serif;
+}
 
 /* ═══════════════════════════════════════════════
    TRAFFIC VISION AI — Netflix-Inspired Design System
@@ -530,4 +536,55 @@ input[type="number"] {
 .custom-div-icon {
   background: transparent !important;
   border: none !important;
+}
+
+/* ═══════════════════════════════════════════════
+   LANDING PAGE — Cinematic editorial styles
+   ═══════════════════════════════════════════════ */
+
+/* Hero slideshow progress bar fill animation */
+@property --progress {
+  syntax: "<percentage>";
+  initial-value: 0%;
+  inherits: false;
+}
+
+@keyframes fillProgress {
+  from { --progress: 0%; }
+  to { --progress: 100%; }
+}
+
+.landing-progress-bar {
+  background: linear-gradient(to right, #fff var(--progress), rgba(255,255,255,0.15) var(--progress));
+  animation: fillProgress var(--slide-duration, 6s) linear forwards;
+}
+
+.landing-progress-bar.paused {
+  animation-play-state: paused;
+}
+
+/* Shared landing section reveal */
+@keyframes landingFadeUp {
+  from { opacity: 0; transform: translateY(40px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Image Ken Burns effect */
+@keyframes kenBurns {
+  0%   { transform: scale(1.0); }
+  100% { transform: scale(1.08); }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .landing-progress-bar {
+    animation: none;
+    --progress: 100%;
+  }
+
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

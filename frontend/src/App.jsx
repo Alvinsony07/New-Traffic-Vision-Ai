@@ -14,6 +14,7 @@ import AnalyticsPage from './pages/AnalyticsPage';
 import ReportsPage from './pages/ReportsPage';
 import AmbulanceDriverPage from './pages/AmbulanceDriverPage';
 import LandingPage from './pages/LandingPage';
+import AboutSystemPage from './pages/AboutSystemPage';
 import { Loader2, Video, AlertTriangle, Car, Gauge, Timer, Siren, Clock, Settings } from 'lucide-react';
 import { dashboard } from './api/client';
 
@@ -400,6 +401,7 @@ function App() {
         <Router>
           <Routes>
             <Route path="/" element={<LandingPage />} />
+            <Route path="/about-system" element={<AboutSystemPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/*" element={<AppLayout />} />
