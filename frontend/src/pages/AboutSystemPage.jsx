@@ -1,6 +1,7 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, useInView } from 'framer-motion';
+import Lenis from 'lenis';
 import { ArrowLeft, ArrowRight, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
 
 /* ═══════════════════════════════════════════════════════════
@@ -163,6 +164,26 @@ const FadeUp = ({ children, delay = 0, className = '' }) => {
 
 export default function AboutSystemPage() {
   const navigate = useNavigate();
+
+  /* Lenis ultra-smooth scroll */
+  useEffect(() => {
+    const lenis = new Lenis({
+      duration: 1.4,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      smoothWheel: true,
+      wheelMultiplier: 1,
+    });
+    let rafId;
+    function raf(time) {
+      lenis.raf(time);
+      rafId = requestAnimationFrame(raf);
+    }
+    rafId = requestAnimationFrame(raf);
+    return () => {
+      cancelAnimationFrame(rafId);
+      lenis.destroy();
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white overflow-x-hidden font-inter selection:bg-white/20">

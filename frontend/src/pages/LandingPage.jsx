@@ -1,13 +1,13 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+﻿import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { motion, useScroll, useTransform, useInView, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import Lenis from 'lenis';
 
-/* ═══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    CONSTANTS
-   ═══════════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 const SLIDE_DURATION = 6000; // ms per slide
 
@@ -20,7 +20,7 @@ const HERO_SLIDES = [
   },
   {
     id: 2,
-    image: '/images/landing/hero-traffic-signals.jpg',
+    image: '/images/landing/city-traffic-night.jpg',
     subtitle: 'Density-Priority Switching',
     title: ['Highest Count', 'Lane Gets', 'Green'],
   },
@@ -32,7 +32,7 @@ const HERO_SLIDES = [
   },
   {
     id: 4,
-    image: '/images/landing/feat-traffic-monitoring.jpg',
+    image: '/images/landing/aerial-traffic-intersection.jpg',
     subtitle: 'YOLOv8 Vision Inference',
     title: ['Five Vehicle', 'Classes', 'Detected'],
   },
@@ -46,19 +46,19 @@ const HERO_SLIDES = [
 
 const FEATURES = [
   {
-    image: '/images/landing/feat-traffic-monitoring.jpg',
+    image: '/images/landing/aerial-traffic-intersection.jpg',
     label: 'The engine of intelligence',
     title: 'YOLOv8 Detection Core',
     desc: 'Our proprietary pipeline processes multi-camera RTSP streams through YOLOv8 object detection, mapping dense traffic objects into actionable volumetric data states with sub-100ms latency.',
   },
   {
-    image: '/images/landing/feat-signal-control.jpg',
+    image: '/images/landing/traffic-signal.jpg',
     label: 'Chosen by cities. Built for scale',
     title: 'Adaptive Signal Logic',
     desc: 'Replaces outdated static timers with genuine volumetric signal logic. Each intersection autonomously adjusts green phases based on real-time vehicle density percentages across all approaches.',
   },
   {
-    image: '/images/landing/feat-emergency-vehicle.jpg',
+    image: '/images/landing/ambulance-city.jpg',
     label: 'Customised for every intersection',
     title: 'Emergency Preemption',
     desc: 'When an ambulance is detected, the system triggers an immediate signal preemption cascade—clearing corridors with 100ms response time and automatic return-to-normal sequencing.',
@@ -71,28 +71,28 @@ const PORTAL_MODULES = [
     status: 'Live',
     statusColor: 'text-emerald-400',
     desc: 'Manual signal override, RTSP stream config, user management, and CSV data export.',
-    image: '/images/landing/mod-control.jpg',
+    image: '/images/landing/control-room.jpg',
   },
   {
     name: 'User Portal',
     status: 'Live',
     statusColor: 'text-blue-400',
     desc: 'Accident reporting with GPS, analytics charts, city overview map, and dispatch tracking.',
-    image: '/images/landing/mod-analytics.jpg',
+    image: '/images/landing/analytics-dashboard.jpg',
   },
   {
     name: 'Ambulance Driver',
     status: 'Beta',
     statusColor: 'text-amber-400',
     desc: 'Dispatch acceptance, en-route status updates, and arrival logging for ambulance operators.',
-    image: '/images/landing/feat-emergency-vehicle.jpg',
+    image: '/images/landing/ambulance-city.jpg',
   },
   {
     name: 'Detection Engine',
     status: 'Live',
     statusColor: 'text-emerald-400',
     desc: 'YOLOv8 Nano processing video frames to count and classify vehicles per lane in real time.',
-    image: '/images/landing/mod-detection.jpg',
+    image: '/images/landing/ai-code.jpg',
   },
 ];
 
@@ -109,9 +109,9 @@ const TECH_STACK = [
   { group: 'Auth & Stream', items: ['JWT (python-jose)', 'bcrypt', 'IP Rate Limiting', 'MJPEG Streaming'] },
 ];
 
-/* ═══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    REUSABLE ANIMATION COMPONENTS
-   ═══════════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 const RevealText = ({ children, delay = 0, className = '' }) => {
   const ref = useRef(null);
@@ -172,13 +172,13 @@ const ScrollMarquee = ({ lineLeft, lineRight }) => {
     <div ref={ref} className="w-full overflow-hidden py-2">
       <motion.h2
         style={{ x: xLeft, willChange: 'transform' }}
-        className="text-white text-center text-[clamp(2.5rem,8vw,7rem)] md:text-[clamp(3rem,7vw,7rem)] leading-none tracking-widest font-syncopate font-bold whitespace-nowrap select-none"
+        className="text-white text-center text-[clamp(1.8rem,4vw,4.5rem)] leading-none tracking-wide font-syncopate font-bold whitespace-nowrap select-none"
       >
         {lineLeft}
       </motion.h2>
       <motion.h2
         style={{ x: xRight, willChange: 'transform' }}
-        className="text-white text-center text-[clamp(2.5rem,8vw,7rem)] md:text-[clamp(3rem,7vw,7rem)] leading-none tracking-widest font-syncopate font-bold whitespace-nowrap select-none mt-2"
+        className="text-white text-center text-[clamp(1.8rem,4vw,4.5rem)] leading-none tracking-wide font-syncopate font-bold whitespace-nowrap select-none mt-2"
       >
         {lineRight}
       </motion.h2>
@@ -186,9 +186,9 @@ const ScrollMarquee = ({ lineLeft, lineRight }) => {
   );
 };
 
-/* ═══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    NAVBAR
-   ═══════════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 const Navbar = ({ user }) => {
   const [scrolled, setScrolled] = useState(false);
@@ -357,13 +357,12 @@ const Navbar = ({ user }) => {
   );
 };
 
-/* ═══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    HERO SLIDESHOW
-   ═══════════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 const HeroSlideshow = () => {
   const [current, setCurrent] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
   const [direction, setDirection] = useState(1);
   const timerRef = useRef(null);
   const [progressKeys, setProgressKeys] = useState(HERO_SLIDES.map(() => 0));
@@ -388,10 +387,9 @@ const HeroSlideshow = () => {
   }, [current, goto]);
 
   useEffect(() => {
-    if (isPaused) return;
     timerRef.current = setTimeout(next, SLIDE_DURATION);
     return () => clearTimeout(timerRef.current);
-  }, [current, isPaused, next]);
+  }, [current, next]);
 
   useEffect(() => {
     const onKey = (e) => {
@@ -413,8 +411,6 @@ const HeroSlideshow = () => {
   return (
     <section
       className="relative h-screen w-full overflow-hidden bg-black"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
     >
       <AnimatePresence custom={direction} mode="sync">
         <motion.div
@@ -480,7 +476,7 @@ const HeroSlideshow = () => {
           initial={{ y: '100%', opacity: 0 }}
           animate={{ y: '22%', opacity: 1 }}
           transition={{ duration: 1.4, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
-          className="text-[15vw] md:text-[13vw] leading-none text-white/[0.07] whitespace-nowrap tracking-tighter text-center select-none font-syncopate font-bold"
+          className="text-[9vw] md:text-[8vw] leading-none text-white/[0.07] whitespace-nowrap tracking-tighter text-center select-none font-syncopate font-bold"
         >
           TRAFFICVISION
         </motion.h2>
@@ -512,29 +508,14 @@ const HeroSlideshow = () => {
         </span>
       </div>
 
-      <div className="absolute bottom-10 right-8 md:right-16 xl:right-28 z-30 flex items-center gap-4">
-        <button
-          onClick={prev}
-          className="w-10 h-10 border border-white/20 flex items-center justify-center text-white/50 hover:text-white hover:border-white/60 transition-all duration-300"
-          aria-label="Previous slide"
-        >
-          <ChevronLeft size={18} />
-        </button>
-        <button
-          onClick={next}
-          className="w-10 h-10 border border-white/20 flex items-center justify-center text-white/50 hover:text-white hover:border-white/60 transition-all duration-300"
-          aria-label="Next slide"
-        >
-          <ChevronRight size={18} />
-        </button>
-      </div>
+
     </section>
   );
 };
 
-/* ═══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    MAIN LANDING PAGE
-   ═══════════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 export default function LandingPage() {
   const { user } = useAuth();
@@ -569,10 +550,10 @@ export default function LandingPage() {
     >
       <Navbar user={user} />
 
-      {/* ─── 1. HERO SLIDESHOW ─── */}
+      {/* â”€â”€â”€ 1. HERO SLIDESHOW â”€â”€â”€ */}
       <HeroSlideshow />
 
-      {/* ─── 2. INTRODUCTION (Warm White Section) ─── */}
+      {/* â”€â”€â”€ 2. INTRODUCTION (Warm White Section) â”€â”€â”€ */}
       <section id="about" className="relative z-30 bg-[#f5f3ef] text-[#1a1a1a] py-28 md:py-40 px-8 md:px-16 xl:px-28">
         <div className="max-w-7xl mx-auto">
           <RevealText>
@@ -594,13 +575,14 @@ export default function LandingPage() {
               </RevealText>
 
               <FadeInView delay={0.3} className="mt-14">
-                <div className="relative h-[280px] md:h-[380px] w-full overflow-hidden">
+                <div className="relative h-[280px] md:h-[380px] w-full overflow-hidden group">
                   <img
                     src="/images/landing/intro-aerial.jpg"
                     alt="Traffic intersection aerial view"
-                    className="absolute inset-0 w-full h-full object-cover hover:grayscale transition-all duration-700 scale-105 hover:scale-100"
+                    className="absolute inset-0 w-full h-full object-cover transition-all duration-700 scale-105 hover:scale-100 group-hover:brightness-110 group-hover:saturate-125"
                     loading="lazy"
                   />
+                  <div className="absolute inset-0 bg-gradient-to-t from-cyan-500/15 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-[1] pointer-events-none" />
                 </div>
               </FadeInView>
             </div>
@@ -634,7 +616,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ─── 3. "MADE WITH AI / PERFECTED IN REAL-TIME" Feature Sections ─── */}
+      {/* â”€â”€â”€ 3. "MADE WITH AI / PERFECTED IN REAL-TIME" Feature Sections â”€â”€â”€ */}
       <section id="technology" className="relative z-30 bg-[#0a0a0a] overflow-hidden">
 
         {/* Full-width editorial parallax band */}
@@ -665,10 +647,11 @@ export default function LandingPage() {
                     <img
                       src={feat.image}
                       alt={feat.title}
-                      className="absolute inset-0 w-full h-full object-cover group-hover:grayscale transition-all duration-700 scale-[1.02] group-hover:scale-100"
+                      className="absolute inset-0 w-full h-full object-cover transition-all duration-700 scale-[1.02] group-hover:scale-100 group-hover:brightness-110 group-hover:saturate-125"
                       loading="lazy"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-cyan-500/15 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-[1] pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-[2]" />
                   </div>
                 </FadeInView>
 
@@ -713,7 +696,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ─── 4. BENTO IMAGE GRID — Architecture ─── */}
+      {/* â”€â”€â”€ 4. BENTO IMAGE GRID — Architecture â”€â”€â”€ */}
       <section className="relative z-30 bg-[#0a0a0a] py-28 md:py-40 px-8 md:px-16 xl:px-28">
         <div className="max-w-7xl mx-auto">
           <RevealText>
@@ -734,11 +717,12 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-12 gap-5 md:gap-6">
             <FadeInView className="md:col-span-8 h-[400px] md:h-[600px] relative overflow-hidden group">
               <img
-                src="/images/landing/hero-traffic-signals.jpg"
+                src="/images/landing/city-traffic-night.jpg"
                 alt="AI Traffic monitoring system"
-                className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:grayscale group-hover:scale-105 transition-all duration-700"
+                className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 group-hover:brightness-110 group-hover:saturate-125 transition-all duration-700"
                 loading="lazy"
               />
+              <div className="absolute inset-0 bg-gradient-to-t from-cyan-500/15 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-[1] pointer-events-none" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
               <div className="absolute bottom-8 left-8 right-8">
                 <h3
@@ -755,11 +739,12 @@ export default function LandingPage() {
             <div className="md:col-span-4 flex flex-col gap-5 md:gap-6">
               <FadeInView delay={0.15} className="flex-1 relative overflow-hidden group h-[280px] md:h-auto">
                 <img
-                  src="/images/landing/feat-emergency-vehicle.jpg"
+                  src="/images/landing/ambulance-city.jpg"
                   alt="Emergency vehicle on road"
-                  className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:grayscale group-hover:scale-105 transition-all duration-700"
+                  className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 group-hover:brightness-110 group-hover:saturate-125 transition-all duration-700"
                   loading="lazy"
                 />
+                <div className="absolute inset-0 bg-gradient-to-t from-cyan-500/15 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-[1] pointer-events-none" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
                 <div className="absolute bottom-6 left-6">
                   <h3
@@ -773,11 +758,12 @@ export default function LandingPage() {
 
               <FadeInView delay={0.25} className="flex-1 relative overflow-hidden group h-[280px] md:h-auto">
                 <img
-                  src="/images/landing/mod-analytics.jpg"
+                  src="/images/landing/analytics-dashboard.jpg"
                   alt="Analytics dashboard"
-                  className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:grayscale group-hover:scale-105 transition-all duration-700"
+                  className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 group-hover:brightness-110 group-hover:saturate-125 transition-all duration-700"
                   loading="lazy"
                 />
+                <div className="absolute inset-0 bg-gradient-to-t from-cyan-500/15 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-[1] pointer-events-none" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
                 <div className="absolute bottom-6 left-6">
                   <h3
@@ -794,12 +780,12 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6 mt-5 md:mt-6">
             {[
               {
-                img: '/images/landing/grid-signal-logic.jpg',
+                img: '/images/landing/aerial-highway.jpg',
                 title: 'Signal Logic',
                 desc: 'Density-priority phase control',
               },
               {
-                img: '/images/landing/feat-signal-control.jpg',
+                img: '/images/landing/traffic-signal.jpg',
                 title: 'Python Backend',
                 desc: 'FastAPI microservices',
               },
@@ -813,9 +799,10 @@ export default function LandingPage() {
                 <img
                   src={card.img}
                   alt={card.title}
-                  className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:grayscale group-hover:scale-105 transition-all duration-700"
+                  className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 group-hover:brightness-110 group-hover:saturate-125 transition-all duration-700"
                   loading="lazy"
                 />
+                <div className="absolute inset-0 bg-gradient-to-t from-cyan-500/15 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-[1] pointer-events-none" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
                 <div className="absolute bottom-6 left-6">
                   <h3
@@ -831,7 +818,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ─── 5. SPECS / ARCHITECTURE LIST ─── */}
+      {/* â”€â”€â”€ 5. SPECS / ARCHITECTURE LIST â”€â”€â”€ */}
       <section className="relative z-30 bg-[#0a0a0a] border-t border-white/[0.06] py-28 md:py-40 px-8 md:px-16 xl:px-28">
         <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-16 lg:gap-24">
           <div className="lg:w-2/5">
@@ -842,15 +829,32 @@ export default function LandingPage() {
                 System<br />Specifications
               </h2>
             </RevealText>
-            <FadeInView delay={0.2} className="hidden lg:block mt-16 sticky top-32">
-              <div className="relative h-[520px] w-full overflow-hidden">
+            <FadeInView delay={0.2} className="hidden lg:flex flex-col gap-8 mt-16 sticky top-32">
+              <div className="relative h-[440px] w-full overflow-hidden group">
                 <img
-                  src="/images/landing/hero-traffic-signals.jpg"
-                  alt="Traffic signal intersection view"
-                  className="absolute inset-0 w-full h-full object-cover opacity-70 hover:grayscale hover:opacity-100 transition-all duration-700"
+                  src="/images/landing/city-traffic-night.jpg"
+                  alt="City traffic at night with light trails"
+                  className="absolute inset-0 w-full h-full object-cover opacity-70 group-hover:opacity-100 group-hover:brightness-110 group-hover:saturate-125 transition-all duration-700"
                   loading="lazy"
                 />
+                <div className="absolute inset-0 bg-gradient-to-t from-cyan-500/15 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-[1] pointer-events-none" />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent" />
+                <div className="absolute bottom-4 left-4 z-10">
+                  <span className="text-[9px] tracking-[0.2em] uppercase text-white/40 font-inter font-semibold">Detection &amp; Control</span>
+                </div>
+              </div>
+              <div className="relative h-[360px] w-full overflow-hidden group">
+                <img
+                  src="/images/landing/ambulance-city.jpg"
+                  alt="Ambulance responding to emergency on city street"
+                  className="absolute inset-0 w-full h-full object-cover opacity-70 group-hover:opacity-100 group-hover:brightness-110 group-hover:saturate-125 transition-all duration-700"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-cyan-500/15 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-[1] pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent" />
+                <div className="absolute bottom-4 left-4 z-10">
+                  <span className="text-[9px] tracking-[0.2em] uppercase text-white/40 font-inter font-semibold">Emergency Preemption</span>
+                </div>
               </div>
             </FadeInView>
           </div>
@@ -904,7 +908,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ─── 6. MODULE RANGE — Horizontal Scroll ─── */}
+      {/* â”€â”€â”€ 6. MODULE RANGE — Horizontal Scroll â”€â”€â”€ */}
       <section id="modules" className="relative z-30 bg-[#0a0a0a] border-t border-white/[0.06] py-28 md:py-40">
         <div className="px-8 md:px-16 xl:px-28 max-w-7xl mx-auto mb-14">
           <RevealText>
@@ -936,14 +940,15 @@ export default function LandingPage() {
                 <img
                   src={mod.image}
                   alt={mod.name}
-                  className="absolute inset-0 w-full h-full object-cover group-hover:grayscale transition-all duration-700 scale-[1.02] group-hover:scale-100"
+                  className="absolute inset-0 w-full h-full object-cover transition-all duration-700 scale-[1.02] group-hover:scale-100 group-hover:brightness-110 group-hover:saturate-125"
                   loading="lazy"
                 />
+                <div className="absolute inset-0 bg-gradient-to-t from-cyan-500/15 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-[1] pointer-events-none" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
                   <div className="flex items-center gap-2 mb-3">
                     <span className={`text-[9px] tracking-[0.2em] uppercase font-bold ${mod.statusColor}`}>
-                      ● {mod.status}
+                      â— {mod.status}
                     </span>
                   </div>
                   <h3
@@ -1023,7 +1028,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ─── 7. SYSTEM FACTS (replaces fake testimonial) ─── */}
+      {/* â”€â”€â”€ 7. SYSTEM FACTS (replaces fake testimonial) â”€â”€â”€ */}
       <section className="relative z-30 bg-[#f5f3ef] text-[#1a1a1a] py-28 md:py-40 px-8 md:px-16 xl:px-28 overflow-hidden">
         <div className="max-w-7xl mx-auto">
           <RevealText>
@@ -1057,7 +1062,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ─── 8. EXTRA IMAGE BAND — Parallax break ─── */}
+      {/* â”€â”€â”€ 8. EXTRA IMAGE BAND — Parallax break â”€â”€â”€ */}
       <section className="relative z-30 h-[40vh] md:h-[60vh] w-full overflow-hidden">
         <ParallaxImage
           src="/images/landing/band-highway.jpg"
@@ -1068,7 +1073,7 @@ export default function LandingPage() {
         <div className="absolute inset-0 bg-black/40 z-10" />
       </section>
 
-      {/* ─── 9. NEWSLETTER / SUBSCRIBE ─── */}
+      {/* â”€â”€â”€ 9. NEWSLETTER / SUBSCRIBE â”€â”€â”€ */}
       <section className="relative z-30 bg-[#0a0a0a] py-28 md:py-40 px-8 md:px-16 xl:px-28 border-t border-white/[0.06]">
         <div className="max-w-3xl mx-auto text-center">
           <RevealText>
@@ -1106,7 +1111,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ─── 10. IMPOSING FOOTER CTA ─── */}
+      {/* â”€â”€â”€ 10. IMPOSING FOOTER CTA â”€â”€â”€ */}
       <section className="relative z-30 bg-[#0a0a0a] pt-28 md:pt-40 pb-12 overflow-hidden">
         <div className="absolute inset-0">
           <img
