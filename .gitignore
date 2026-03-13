@@ -26,3 +26,9 @@ Thumbs.db
 
 # User Uploads / Temp
 backend/app/uploads/
+
+# ML / YOLO Model Weights (large binary files — store locally, never commit)
+*.pt
+*.pth
+*.onnx
+*.weights
