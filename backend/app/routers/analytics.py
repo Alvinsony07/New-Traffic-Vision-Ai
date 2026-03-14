@@ -1,11 +1,11 @@
 """
-Analytics Router — Stats, trends, predictions, reports data, exports
+Analytics Router — Stats, trends, predictions, reports data, exports, PDF generation
 """
 from datetime import datetime as dt, timedelta
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Query
-from fastapi.responses import StreamingResponse
+from fastapi import APIRouter, Depends, Query, HTTPException
+from fastapi.responses import StreamingResponse, HTMLResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func, extract
 
@@ -132,6 +132,86 @@ def export_stats(db: Session = Depends(get_db), current_user: User = Depends(get
 
 
 # ──────────────────────────────────────
+#  GET /api/generate_pdf  (HTML Report)
+# ──────────────────────────────────────
+@router.get("/generate_pdf")
+def generate_pdf(db: Session = Depends(get_db), current_user: User = Depends(get_current_admin)):
+    """Generate a downloadable HTML report of traffic statistics."""
+    stats = db.query(LaneStats).order_by(LaneStats.timestamp.desc()).limit(100).all()
+    dispatches = db.query(DispatchLog).order_by(DispatchLog.timestamp.desc()).limit(20).all()
+    incidents = db.query(AccidentReport).order_by(AccidentReport.timestamp.desc()).limit(20).all()
+
+    total_vehicles = sum(s.vehicle_count for s in stats)
+    total_dispatches = db.query(DispatchLog).count()
+    total_incidents = db.query(AccidentReport).count()
+    now = dt.now()
+
+    # Build HTML
+    html = f"""
+    <html>
+    <head>
+        <style>
+            body {{ font-family: Arial, sans-serif; margin: 40px; color: #1a1a2e; }}
+            h1 {{ color: #3b82f6; border-bottom: 3px solid #3b82f6; padding-bottom: 10px; }}
+            h2 {{ color: #1e293b; margin-top: 30px; }}
+            .meta {{ color: #64748b; font-size: 14px; margin-bottom: 30px; }}
+            table {{ width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 13px; }}
+            th {{ background: #3b82f6; color: white; padding: 10px; text-align: left; }}
+            td {{ padding: 8px 10px; border-bottom: 1px solid #e2e8f0; }}
+            tr:nth-child(even) {{ background: #f8fafc; }}
+            .stat-box {{ display: inline-block; background: #f1f5f9; border-radius: 10px; padding: 15px 25px; margin: 5px; text-align: center; }}
+            .stat-val {{ font-size: 28px; font-weight: bold; color: #3b82f6; }}
+            .stat-lbl {{ font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }}
+            .footer {{ margin-top: 40px; padding-top: 15px; border-top: 1px solid #e2e8f0; color: #94a3b8; font-size: 12px; }}
+        </style>
+    </head>
+    <body>
+        <h1>Traffic Vision AI — Analytics Report</h1>
+        <div class="meta">Generated: {now.strftime('%Y-%m-%d %H:%M:%S')} | System v3.0</div>
+
+        <div>
+            <div class="stat-box"><div class="stat-val">{total_vehicles}</div><div class="stat-lbl">Total Vehicles</div></div>
+            <div class="stat-box"><div class="stat-val">{total_dispatches}</div><div class="stat-lbl">Dispatches</div></div>
+            <div class="stat-box"><div class="stat-val">{total_incidents}</div><div class="stat-lbl">Incidents</div></div>
+            <div class="stat-box"><div class="stat-val">{len(stats)}</div><div class="stat-lbl">Data Points</div></div>
+        </div>
+
+        <h2>Recent Traffic Records</h2>
+        <table>
+            <tr><th>ID</th><th>Lane</th><th>Vehicles</th><th>Density</th><th>Timestamp</th></tr>
+    """
+
+    for s in stats[:50]:
+        density = s.density or ("High" if s.vehicle_count > 20 else ("Medium" if s.vehicle_count > 10 else "Low"))
+        html += f"<tr><td>#{s.id}</td><td>Lane {s.lane_id}</td><td>{s.vehicle_count}</td><td>{density}</td><td>{s.timestamp.strftime('%Y-%m-%d %H:%M')}</td></tr>\n"
+
+    html += """</table>
+        <h2>Recent Incident Reports</h2>
+        <table>
+            <tr><th>ID</th><th>Location</th><th>Status</th><th>Reported</th></tr>
+    """
+
+    for inc in incidents:
+        html += f"<tr><td>#{inc.id}</td><td>{inc.location}</td><td>{inc.status}</td><td>{inc.timestamp.strftime('%Y-%m-%d %H:%M')}</td></tr>\n"
+
+    html += f"""
+        </table>
+        <div class="footer">
+            Traffic Vision AI — Autonomous Traffic Management System<br>
+            This report was auto-generated. Data reflects records up to {now.strftime('%Y-%m-%d %H:%M')}.
+        </div>
+    </body>
+    </html>
+    """
+
+    filename = f"traffic_report_{now.strftime('%Y%m%d_%H%M%S')}.html"
+    return HTMLResponse(
+        content=html,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+# ──────────────────────────────────────
 #  GET /api/predictions
 # ──────────────────────────────────────
 @router.get("/predictions")
@@ -236,3 +316,70 @@ def city_map_data(db: Session = Depends(get_db), current_user: User = Depends(ge
             "active_dispatches": len(dispatch_data),
         },
     }
+
+
+# ──────────────────────────────────────
+#  Admin User Management
+# ──────────────────────────────────────
+@router.get("/users")
+def list_users(db: Session = Depends(get_db), current_user: User = Depends(get_current_admin)):
+    """List all users for admin management."""
+    users = db.query(User).order_by(User.created_at.desc()).all()
+    return {
+        "users": [
+            {
+                "id": u.id,
+                "username": u.username,
+                "full_name": u.full_name,
+                "phone_number": u.phone_number,
+                "organization": u.organization,
+                "role": u.role,
+                "is_locked": u.is_locked,
+                "created_at": u.created_at.strftime("%Y-%m-%d %H:%M:%S") if u.created_at else None,
+            }
+            for u in users
+        ]
+    }
+
+
+@router.delete("/users/{user_id}")
+def delete_user(user_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_admin)):
+    """Delete a user (admin only). Cannot delete yourself."""
+    if user_id == current_user.id:
+        raise HTTPException(status_code=400, detail="Cannot delete your own account")
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    db.delete(user)
+    db.commit()
+    return {"success": True, "message": f"User '{user.username}' deleted"}
+
+
+@router.post("/users/{user_id}/toggle-lock")
+def toggle_lock_user(user_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_admin)):
+    """Lock or unlock a user account."""
+    if user_id == current_user.id:
+        raise HTTPException(status_code=400, detail="Cannot lock your own account")
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.is_locked = not user.is_locked
+    if not user.is_locked:
+        user.failed_login_attempts = 0
+    db.commit()
+    return {"success": True, "is_locked": user.is_locked}
+
+
+@router.post("/users/{user_id}/change-role")
+def change_user_role(user_id: int, role: str = Query(...), db: Session = Depends(get_db), current_user: User = Depends(get_current_admin)):
+    """Change user role (admin only)."""
+    if user_id == current_user.id:
+        raise HTTPException(status_code=400, detail="Cannot change your own role")
+    if role not in ("admin", "user", "ambulance_driver"):
+        raise HTTPException(status_code=400, detail="Invalid role")
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.role = role
+    db.commit()
+    return {"success": True, "role": role}

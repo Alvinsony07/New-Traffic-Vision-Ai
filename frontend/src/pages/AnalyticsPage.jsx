@@ -1,368 +1,231 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import {
-    Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, ArcElement, RadialLinearScale, Filler
-} from 'chart.js';
-import { Line, Bar, Doughnut, PolarArea } from 'react-chartjs-2';
 import { analytics } from '../api/client';
-import { Activity, Car, TrendingUp, Clock, Download, Layers, BarChart3, PieChart, Zap } from 'lucide-react';
+import { useToast } from '../context/ToastContext';
+import { BarChart3, TrendingUp, PieChart, Clock, Truck, Zap, Brain } from 'lucide-react';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend, Filler } from 'chart.js';
+import { Line, Bar, Pie, Doughnut } from 'react-chartjs-2';
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, ArcElement, RadialLinearScale, Filler);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend, Filler);
 
-// Chart.js global theme
+// Optimized dark-theme Chart.js defaults
 ChartJS.defaults.color = '#808080';
 ChartJS.defaults.font.family = "'Inter', sans-serif";
-ChartJS.defaults.font.weight = '500';
-ChartJS.defaults.scale.grid.color = 'rgba(255, 255, 255, 0.04)';
+ChartJS.defaults.animation.duration = 800;
+ChartJS.defaults.animation.easing = 'easeOutQuart';
 
-// Animated stat counter
-function AnimatedStat({ value, label, icon: Icon, color }) {
-    const [display, setDisplay] = useState(0);
-    useEffect(() => {
-        const target = Number(value) || 0;
-        const duration = 800;
-        const start = 0;
-        const step = target / (duration / 16);
-        let current = start;
-        const timer = setInterval(() => {
-            current += step;
-            if (current >= target) { current = target; clearInterval(timer); }
-            setDisplay(Math.round(current));
-        }, 16);
-        return () => clearInterval(timer);
-    }, [value]);
-
-    return (
-        <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-[#181818] border border-white/[0.06] hover:border-white/[0.1] rounded-2xl p-5 shadow-lg transition-all group"
-        >
-            <div className="flex justify-between items-start mb-3">
-                <div className={`p-2.5 rounded-xl bg-opacity-10`} style={{ backgroundColor: `${color}15` }}>
-                    <Icon className="w-5 h-5" style={{ color }} />
-                </div>
-                <div className="text-xs font-bold text-gray-600 uppercase tracking-widest text-right max-w-[80px]">{label}</div>
-            </div>
-            <div className="text-3xl font-black text-white tabular-nums">{display}</div>
-        </motion.div>
-    );
-}
+const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+        legend: { labels: { color: '#9ca3af', font: { size: 11, weight: 500 }, boxWidth: 12, padding: 16, usePointStyle: true, pointStyle: 'circle' } },
+        tooltip: {
+            backgroundColor: 'rgba(10, 10, 10, 0.95)',
+            titleColor: '#f8fafc',
+            bodyColor: '#d1d5db',
+            borderColor: 'rgba(255,255,255,0.08)',
+            borderWidth: 1,
+            cornerRadius: 10,
+            padding: 12,
+            titleFont: { weight: 700, size: 12 },
+            bodyFont: { size: 11 },
+            displayColors: true,
+            boxPadding: 4,
+        },
+    },
+    scales: {
+        x: {
+            ticks: { color: '#6b7280', font: { size: 10, weight: 500 }, maxRotation: 0 },
+            grid: { color: 'rgba(255,255,255,0.03)', drawBorder: false },
+            border: { display: false },
+        },
+        y: {
+            ticks: { color: '#6b7280', font: { size: 10, weight: 500 }, padding: 8 },
+            grid: { color: 'rgba(255,255,255,0.04)', drawBorder: false },
+            border: { display: false },
+        },
+    },
+};
 
 export default function AnalyticsPage() {
-    const [stats, setStats] = useState(null);
+    const [statsData, setStatsData] = useState(null);
     const [predictions, setPredictions] = useState(null);
     const [loading, setLoading] = useState(true);
+    const { addToast } = useToast();
 
     useEffect(() => {
         const fetchAll = async () => {
             try {
-                const [s, p] = await Promise.all([
-                    analytics.stats(),
-                    analytics.predictions(),
-                ]);
-                setStats(s);
-                setPredictions(p);
-            } catch (err) {
-                console.error("Error fetching analytics:", err);
-            } finally {
-                setLoading(false);
-            }
+                const [stats, preds] = await Promise.all([analytics.stats(), analytics.predictions()]);
+                setStatsData(stats);
+                setPredictions(preds);
+            } catch (err) { console.error(err); addToast('Failed to load analytics', 'error'); }
+            finally { setLoading(false); }
         };
         fetchAll();
-        const t = setInterval(fetchAll, 60000);
-        return () => clearInterval(t);
+        const interval = setInterval(fetchAll, 30000);
+        return () => clearInterval(interval);
     }, []);
 
-    if (loading) {
-        return (
-            <div className="flex h-full items-center justify-center">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="w-10 h-10 rounded-full border-2 border-[#E50914]/20 border-t-[#E50914] animate-spin" />
-                    <p className="text-xs text-gray-600 uppercase tracking-[0.3em] font-bold">Loading Analytics</p>
-                </div>
-            </div>
-        );
-    }
+    if (loading) return (
+        <div className="flex items-center justify-center h-full">
+            <div className="w-12 h-12 border-2 border-[#E50914]/20 border-t-[#E50914] rounded-full animate-spin" />
+        </div>
+    );
 
-    // Extract data from backend response
-    const trend = stats?.trend || [];
-    const distribution = stats?.distribution || {};
-    const peakHours = stats?.peak_hours || {};
-    const lanePerf = stats?.lane_performance || {};
-    const ambulanceEvents = stats?.ambulance_events || 0;
-
-    const predList = predictions?.predictions || [];
-
-    // Traffic Volume Trend Chart
-    const trendChartData = {
-        labels: trend.map(t => t.time),
+    // Trend chart
+    const trendChart = {
+        labels: (statsData?.trend || []).map(t => t.time),
         datasets: [{
-            label: 'Vehicle Count',
-            data: trend.map(t => t.count),
-            borderColor: '#E50914',
-            backgroundColor: 'rgba(229, 9, 20, 0.08)',
-            borderWidth: 2,
-            tension: 0.4,
-            fill: true,
-            pointBackgroundColor: '#141414',
-            pointBorderColor: '#E50914',
-            pointBorderWidth: 2,
-            pointRadius: 3,
-            pointHoverRadius: 6
-        }]
-    };
-
-    // Vehicle Type Distribution
-    const distLabels = Object.keys(distribution);
-    const distValues = Object.values(distribution);
-    const distColors = ['#E50914', '#0071EB', '#46D369', '#E87C03', '#9B59B6'];
-
-    const distributionChartData = {
-        labels: distLabels.length > 0 ? distLabels : ['car', 'truck', 'bus', 'motorcycle', 'bicycle'],
-        datasets: [{
-            data: distValues.length > 0 ? distValues : [0, 0, 0, 0, 0],
-            backgroundColor: distColors,
-            borderWidth: 0,
-            hoverOffset: 6
-        }]
-    };
-
-    // Peak Hours Bar Chart
-    const topHours = Object.entries(peakHours)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 12);
-
-    const peakChartData = {
-        labels: topHours.map(([h]) => `${String(h).padStart(2, '0')}:00`),
-        datasets: [{
-            label: 'Traffic Volume',
-            data: topHours.map(([, v]) => v),
-            backgroundColor: topHours.map(([, v]) => {
-                const max = Math.max(...topHours.map(([, val]) => val));
-                const ratio = max > 0 ? v / max : 0;
-                if (ratio > 0.7) return 'rgba(229, 9, 20, 0.8)';
-                if (ratio > 0.4) return 'rgba(232, 124, 3, 0.7)';
-                return 'rgba(70, 211, 105, 0.6)';
-            }),
-            borderRadius: 6,
-            barPercentage: 0.6,
-        }]
-    };
-
-    // Prediction Chart
-    const predictionChartData = {
-        labels: predList.map(p => p.label),
-        datasets: [{
-            label: 'Expected Vehicles',
-            data: predList.map(p => p.avg_vehicles),
+            label: 'Vehicles',
+            data: (statsData?.trend || []).map(t => t.count),
             borderColor: '#0071EB',
-            backgroundColor: 'rgba(0, 113, 235, 0.08)',
-            borderWidth: 2,
-            tension: 0.4,
-            fill: true,
-            pointBackgroundColor: predList.map(p => p.color),
-            pointBorderColor: predList.map(p => p.color),
-            pointBorderWidth: 2,
-            pointRadius: 5,
-            pointHoverRadius: 8
-        }]
+            backgroundColor: 'rgba(0,113,235,0.1)',
+            fill: true, tension: 0.4, pointRadius: 2,
+        }],
     };
 
-    // Lane performance
-    const laneChartData = {
-        labels: Object.keys(lanePerf).map(k => `Lane ${k}`),
+    // Distribution chart
+    const dist = statsData?.distribution || {};
+    const distChart = {
+        labels: Object.keys(dist),
+        datasets: [{
+            data: Object.values(dist),
+            backgroundColor: ['#E50914', '#0071EB', '#46D369', '#E87C03', '#9B59B6', '#F5C518'],
+            borderWidth: 0,
+        }],
+    };
+
+    // Peak hours chart
+    const peak = statsData?.peak_hours || {};
+    const peakChart = {
+        labels: Object.keys(peak).map(h => `${h}:00`),
+        datasets: [{
+            label: 'Total Vehicles',
+            data: Object.values(peak),
+            backgroundColor: Object.keys(peak).map(h => {
+                const v = peak[h]; return v > 100 ? '#E50914' : v > 50 ? '#E87C03' : '#0071EB';
+            }),
+            borderRadius: 4,
+        }],
+    };
+
+    // Lane performance chart
+    const lane = statsData?.lane_performance || {};
+    const laneChart = {
+        labels: Object.keys(lane).map(l => `Lane ${l}`),
         datasets: [{
             label: 'Avg Vehicles',
-            data: Object.values(lanePerf),
-            backgroundColor: ['rgba(229,9,20,0.2)', 'rgba(0,113,235,0.2)', 'rgba(70,211,105,0.2)', 'rgba(232,124,3,0.2)'],
-            borderColor: ['#E50914', '#0071EB', '#46D369', '#E87C03'],
-            borderWidth: 2,
-        }]
+            data: Object.values(lane),
+            backgroundColor: ['#0071EB', '#46D369', '#E87C03', '#9B59B6'],
+            borderRadius: 4,
+        }],
     };
-
-    const chartOptions = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                position: 'top',
-                labels: { usePointStyle: true, padding: 15, font: { size: 11, weight: '600' } }
-            },
-            tooltip: {
-                backgroundColor: 'rgba(20, 20, 20, 0.95)',
-                titleColor: '#fff',
-                bodyColor: '#B3B3B3',
-                padding: 14,
-                borderColor: 'rgba(255,255,255,0.08)',
-                borderWidth: 1,
-                cornerRadius: 10,
-                displayColors: true,
-                titleFont: { weight: '700' }
-            }
-        },
-        scales: {
-            x: { grid: { display: false }, ticks: { font: { size: 10 } } },
-            y: { beginAtZero: true, border: { display: false }, ticks: { font: { size: 10 } } }
-        }
-    };
-
-    const pieOptions = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                position: 'bottom',
-                labels: { usePointStyle: true, padding: 12, font: { size: 10, weight: '600' } }
-            },
-            tooltip: {
-                backgroundColor: 'rgba(20, 20, 20, 0.95)',
-                padding: 12,
-                cornerRadius: 8,
-            }
-        },
-        cutout: '72%'
-    };
-
-    const handleExport = async () => {
-        try {
-            const blob = await analytics.exportCsv();
-            const url = window.URL.createObjectURL(new Blob([blob]));
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', 'traffic_analytics_export.csv');
-            document.body.appendChild(link);
-            link.click();
-            link.parentNode.removeChild(link);
-        } catch (err) {
-            alert('Failed to export data');
-        }
-    };
-
-    const totalVehiclesTracked = trend.reduce((sum, t) => sum + t.count, 0);
 
     return (
-        <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-6">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-[#181818] border border-white/[0.06] rounded-2xl p-6 shadow-lg relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-72 h-72 bg-[#0071EB]/[0.03] rounded-bl-[120px] pointer-events-none" />
-                <div className="relative z-10">
-                    <h1 className="text-3xl font-black tracking-[0.04em] text-white flex items-center gap-3 mb-1" style={{ fontFamily: 'var(--font-display)' }}>
-                        <TrendingUp className="w-7 h-7 text-[#0071EB]" /> SYSTEM ANALYTICS
-                    </h1>
-                    <p className="text-gray-500 text-sm font-medium">Comprehensive traffic metrics, predictions, and performance intelligence.</p>
-                </div>
-                <button
-                    onClick={handleExport}
-                    className="relative z-10 px-5 py-2.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-white rounded-xl transition-all font-bold text-xs tracking-wider flex items-center gap-2 hover:border-white/[0.15]"
-                >
-                    <Download className="w-4 h-4" /> EXPORT CSV
-                </button>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-4 lg:p-6 pb-12">
+            <div className="mb-6">
+                <h2 className="text-3xl font-black tracking-[0.04em] text-white mb-1" style={{ fontFamily: 'var(--font-display)' }}>
+                    ADVANCED ANALYTICS
+                </h2>
+                <p className="text-gray-500 text-sm">Traffic patterns, predictions, and performance metrics.</p>
             </div>
 
-            {/* Scorecards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <AnimatedStat value={totalVehiclesTracked} label="Total Tracked" icon={Car} color="#E50914" />
-                <AnimatedStat value={distLabels.length} label="Vehicle Types" icon={Layers} color="#0071EB" />
-                <AnimatedStat value={ambulanceEvents} label="Emergencies" icon={Activity} color="#46D369" />
-                <AnimatedStat value={predList.length > 0 ? Math.round(predictions?.peak_prediction?.avg_vehicles || 0) : 0} label="Peak Predicted" icon={Zap} color="#E87C03" />
-            </div>
-
-            {/* Charts Row 1: Trend + Distribution */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 bg-[#181818] border border-white/[0.06] rounded-2xl p-6 shadow-lg">
-                    <h2 className="text-xs font-bold text-white uppercase tracking-widest mb-5 flex items-center gap-2">
-                        <BarChart3 className="w-4 h-4 text-[#E50914]" /> Traffic Volume Trend
-                    </h2>
-                    <div className="h-72">
-                        {trend.length > 0 ? (
-                            <Line data={trendChartData} options={chartOptions} />
-                        ) : (
-                            <div className="flex items-center justify-center h-full text-gray-600 text-sm">No trend data yet — start processing video feeds</div>
-                        )}
-                    </div>
-                </div>
-
-                <div className="lg:col-span-1 bg-[#181818] border border-white/[0.06] rounded-2xl p-6 shadow-lg">
-                    <h2 className="text-xs font-bold text-white uppercase tracking-widest mb-5 flex items-center gap-2">
-                        <PieChart className="w-4 h-4 text-[#0071EB]" /> Vehicle Distribution
-                    </h2>
-                    <div className="h-64 relative">
-                        <Doughnut data={distributionChartData} options={pieOptions} />
-                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <div className="text-center">
-                                <div className="text-2xl font-black text-white">{distValues.reduce((a, b) => a + b, 0)}</div>
-                                <div className="text-xs text-gray-500 font-bold uppercase tracking-widest">Total</div>
-                            </div>
+            {/* Summary Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+                {[
+                    { label: 'Data Points', value: statsData?.trend?.length || 0, icon: BarChart3, color: '#0071EB' },
+                    { label: 'Vehicle Types', value: Object.keys(dist).length, icon: PieChart, color: '#46D369' },
+                    { label: 'Peak Hour', value: predictions?.peak_prediction?.label || '--', icon: Clock, color: '#E87C03' },
+                    { label: 'Emergency Events', value: statsData?.ambulance_events || 0, icon: Truck, color: '#E50914' },
+                    { label: 'AI Model', value: predictions?.model?.split(' ')[0] || 'Historical', icon: Brain, color: '#9B59B6' },
+                ].map((s, i) => (
+                    <div key={i} className="bg-[#181818] border border-white/[0.06] rounded-2xl p-4 flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: s.color + '15' }}>
+                            <s.icon className="w-5 h-5" style={{ color: s.color }} />
+                        </div>
+                        <div>
+                            <div className="text-xs text-gray-500 uppercase tracking-widest font-bold">{s.label}</div>
+                            <div className="text-white font-bold text-lg leading-none">{s.value}</div>
                         </div>
                     </div>
+                ))}
+            </div>
+
+            {/* Charts Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+                {/* Traffic Volume Trend */}
+                <div className="bg-[#181818] border border-white/[0.06] rounded-2xl p-5">
+                    <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                        <TrendingUp className="w-4 h-4 text-[#0071EB]" /> Traffic Volume Trend
+                    </h3>
+                    <div style={{ height: '280px' }}>
+                        <Line data={trendChart} options={chartOptions} />
+                    </div>
+                </div>
+
+                {/* Vehicle Distribution */}
+                <div className="bg-[#181818] border border-white/[0.06] rounded-2xl p-5">
+                    <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                        <PieChart className="w-4 h-4 text-[#46D369]" /> Vehicle Distribution
+                    </h3>
+                    <div style={{ height: '280px' }} className="flex items-center justify-center">
+                        <Doughnut data={distChart} options={{ ...chartOptions, scales: undefined, cutout: '55%' }} />
+                    </div>
+                </div>
+
+                {/* Peak Traffic Hours */}
+                <div className="bg-[#181818] border border-white/[0.06] rounded-2xl p-5">
+                    <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-[#E87C03]" /> Peak Traffic Hours
+                    </h3>
+                    <div style={{ height: '280px' }}>
+                        <Bar data={peakChart} options={{ ...chartOptions, plugins: { ...chartOptions.plugins, legend: { display: false } } }} />
+                    </div>
+                </div>
+
+                {/* Lane Performance */}
+                <div className="bg-[#181818] border border-white/[0.06] rounded-2xl p-5">
+                    <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                        <BarChart3 className="w-4 h-4 text-[#9B59B6]" /> Lane Load Performance
+                    </h3>
+                    <div style={{ height: '280px' }}>
+                        <Bar data={laneChart} options={{ ...chartOptions, plugins: { ...chartOptions.plugins, legend: { display: false } } }} />
+                    </div>
                 </div>
             </div>
 
-            {/* Charts Row 2: Predictions + Peak Hours */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-[#181818] border border-white/[0.06] rounded-2xl p-6 shadow-lg">
-                    <div className="flex justify-between items-center mb-5">
-                        <h2 className="text-xs font-bold text-white uppercase tracking-widest flex items-center gap-2">
-                            <TrendingUp className="w-4 h-4 text-[#0071EB]" /> Traffic Predictions
-                        </h2>
-                        {predictions?.model && (
-                            <span className="text-xs bg-[#0071EB]/10 text-[#0071EB] px-2 py-1 rounded font-bold tracking-wider border border-[#0071EB]/20">
-                                {predictions.model}
-                            </span>
-                        )}
-                    </div>
-                    <div className="h-64">
-                        {predList.length > 0 ? (
-                            <Line data={predictionChartData} options={{ ...chartOptions, plugins: { ...chartOptions.plugins, legend: { display: false } } }} />
-                        ) : (
-                            <div className="flex items-center justify-center h-full text-gray-600 text-sm">Predictions require historical data</div>
-                        )}
-                    </div>
-                    {/* Prediction Cards */}
-                    {predList.length > 0 && (
-                        <div className="grid grid-cols-3 gap-2 mt-4">
-                            {predList.slice(0, 3).map((p, i) => (
-                                <div key={i} className="bg-white/[0.02] border border-white/[0.04] rounded-lg p-3 text-center">
-                                    <div className="text-xs text-gray-500 font-bold">{p.label}</div>
-                                    <div className="text-lg font-black text-white">{p.avg_vehicles}</div>
-                                    <div className={`text-xs font-bold uppercase tracking-wider mt-1`} style={{ color: p.color }}>{p.level}</div>
+            {/* AI Predictions */}
+            {predictions && (
+                <div className="bg-[#181818] border border-white/[0.06] rounded-2xl p-5">
+                    <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                        <Zap className="w-4 h-4 text-[#F5C518]" /> AI Congestion Predictions — Next 6 Hours
+                        <span className="text-[10px] bg-white/[0.06] px-2 py-0.5 rounded text-gray-400 font-normal ml-auto">
+                            {predictions.model} • Generated {predictions.generated_at}
+                        </span>
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                        {predictions.predictions.map((p, i) => (
+                            <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
+                                className="bg-white/[0.03] rounded-xl p-4 border border-white/[0.06] text-center hover:bg-white/[0.05] transition-colors">
+                                <div className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2">{p.label}</div>
+                                <div className="text-2xl font-black text-white mb-1">{p.avg_vehicles}</div>
+                                <div className="text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full inline-block"
+                                    style={{ color: p.color, background: p.color + '20' }}>
+                                    {p.level}
                                 </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-
-                <div className="bg-[#181818] border border-white/[0.06] rounded-2xl p-6 shadow-lg">
-                    <h2 className="text-xs font-bold text-white uppercase tracking-widest mb-5 flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-[#E87C03]" /> Peak Hour Analysis
-                    </h2>
-                    <div className="h-64">
-                        {topHours.length > 0 ? (
-                            <Bar data={peakChartData} options={{ ...chartOptions, plugins: { ...chartOptions.plugins, legend: { display: false } } }} />
-                        ) : (
-                            <div className="flex items-center justify-center h-full text-gray-600 text-sm">No hourly data available yet</div>
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            {/* Lane Performance */}
-            {Object.keys(lanePerf).length > 0 && (
-                <div className="bg-[#181818] border border-white/[0.06] rounded-2xl p-6 shadow-lg">
-                    <h2 className="text-xs font-bold text-white uppercase tracking-widest mb-5 flex items-center gap-2">
-                        <Layers className="w-4 h-4 text-[#46D369]" /> Lane Performance Comparison
-                    </h2>
-                    <div className="h-64">
-                        <PolarArea data={laneChartData} options={{
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: { legend: { position: 'right', labels: { usePointStyle: true, padding: 12, font: { size: 11 } } } },
-                            scales: { r: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { display: false } } }
-                        }} />
+                                <div className="mt-2">
+                                    <div className="w-full bg-white/[0.06] h-1 rounded-full overflow-hidden">
+                                        <div className="h-full rounded-full transition-all" style={{ width: `${p.confidence}%`, background: p.color }} />
+                                    </div>
+                                    <div className="text-[10px] text-gray-600 mt-1">{p.confidence}% confidence</div>
+                                </div>
+                            </motion.div>
+                        ))}
                     </div>
                 </div>
             )}
-        </div>
+        </motion.div>
     );
 }

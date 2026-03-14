@@ -117,7 +117,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Traffic Vision AI",
     description="Intelligent Traffic Monitoring & Analytics API",
-    version="2.0.0",
+    version="3.0.0",
     docs_url="/api/docs",
     redoc_url="/api/redoc",
     lifespan=lifespan,
@@ -142,13 +142,26 @@ app.include_router(dispatch.router)
 app.include_router(settings_router.router)
 
 
-# ── Health check ──
+# ── Health check with system diagnostics ──
+import time as _time
+_startup_time = _time.time()
+
 @app.get("/api/health")
 def health():
+    uptime_secs = int(_time.time() - _startup_time)
+    hours, remainder = divmod(uptime_secs, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    
     return {
         "status": "healthy",
         "service": "Traffic Vision AI",
-        "version": "2.0.0",
+        "version": "3.0.0",
+        "uptime": f"{hours}h {minutes}m {seconds}s",
+        "ai_components": {
+            "signal_controller": signal_controller is not None,
+            "video_processor": video_processor is not None,
+            "active_streams": video_processor.get_active_stream_count() if video_processor else 0,
+        },
     }
 
 

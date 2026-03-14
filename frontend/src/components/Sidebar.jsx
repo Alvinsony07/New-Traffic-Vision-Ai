@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutDashboard, Settings, Video, Activity, Users, Siren, FileText, LogOut, Home, Navigation, Camera, AlertTriangle } from 'lucide-react';
+import {
+    LayoutDashboard, Settings, Activity, Users, Siren, FileText, LogOut,
+    Home, Navigation, Camera, AlertTriangle, Hand
+} from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-export default function Sidebar() {
+export default function Sidebar({ manualMode, onToggleManual }) {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -84,6 +87,31 @@ export default function Sidebar() {
                             )}
                         </NavLink>
                     ))}
+
+                    {/* Manual Override Toggle — Admin only */}
+                    {user.role === 'admin' && (
+                        <>
+                            <div className="my-3 border-t border-white/5" />
+                            <label className="flex items-center justify-between px-3 py-3 rounded-md cursor-pointer transition-all hover:bg-white/5 group">
+                                <div className="flex items-center gap-3">
+                                    <Hand className={`w-5 h-5 transition-colors duration-300 ${manualMode ? 'text-[#E87C03]' : 'text-gray-400 group-hover:text-gray-300'}`} />
+                                    <span className={`font-medium tracking-wide transition-colors ${manualMode ? 'text-[#E87C03]' : 'text-gray-400'}`}>
+                                        Manual Override
+                                    </span>
+                                </div>
+                                <div className="relative w-10 h-5">
+                                    <input
+                                        type="checkbox"
+                                        checked={manualMode}
+                                        onChange={(e) => onToggleManual?.(e.target.checked)}
+                                        className="sr-only peer"
+                                    />
+                                    <div className="w-10 h-5 bg-white/[0.1] rounded-full peer-checked:bg-[#E87C03]/20 border border-white/[0.1] peer-checked:border-[#E87C03]/50 transition-all" />
+                                    <div className={`absolute top-0.5 w-4 h-4 rounded-full transition-all ${manualMode ? 'left-5 bg-[#E87C03] shadow-[0_0_8px_rgba(232,124,3,0.5)]' : 'left-0.5 bg-gray-500'}`} />
+                                </div>
+                            </label>
+                        </>
+                    )}
                 </nav>
 
                 <div className="mt-auto pt-6 border-t border-white/5 flex flex-col gap-3">
@@ -95,6 +123,10 @@ export default function Sidebar() {
                             <p className="text-sm font-medium text-white truncate">{user.username}</p>
                             <p className="text-xs text-gray-500 truncate uppercase tracking-widest font-bold">{user.role}</p>
                         </div>
+                    </div>
+
+                    <div className="text-[10px] text-gray-600 tracking-widest px-3 uppercase font-bold">
+                        Traffic Vision AI v3.0
                     </div>
 
                     <button

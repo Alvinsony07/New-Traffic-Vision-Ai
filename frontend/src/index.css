@@ -588,3 +588,24 @@ input[type="number"] {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Dashboard scan line animation */
+@keyframes scanMap {
+  0% { background-position: 0% -100%; }
+  100% { background-position: 0% 100%; }
+}
+
+/* MarkerCluster dark theme for Kerala signals */
+.marker-cluster-small { background: rgba(59, 130, 246, 0.25); }
+.marker-cluster-medium { background: rgba(245, 158, 11, 0.25); }
+.marker-cluster-large { background: rgba(239, 68, 68, 0.25); }
+.marker-cluster-small div,
+.marker-cluster-medium div,
+.marker-cluster-large div {
+  background: rgba(7, 11, 20, 0.85);
+  color: #f8fafc;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 0.75rem;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}

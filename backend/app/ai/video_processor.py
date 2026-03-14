@@ -1,4 +1,5 @@
 import cv2
+import numpy as np
 import threading
 import time
 from .vehicle_detector import VehicleDetector
@@ -15,6 +16,14 @@ class VideoProcessor:
         self.vehicle_detector = VehicleDetector(config.MODEL_VEHICLE_PATH)
         self.ambulance_detector = AmbulanceDetector(config.MODEL_AMBULANCE_PATH)
         self.traffic_logic = TrafficLogic(config)
+        
+        # ── Model Warmup (eliminates cold-start latency) ──
+        try:
+            dummy_frame = np.zeros((270, 480, 3), dtype=np.uint8)
+            self.vehicle_detector.detect(dummy_frame, draw=False)
+            print("✅ YOLO model warmed up — first inference latency eliminated")
+        except Exception as e:
+            print(f"⚠️ Model warmup failed (non-critical): {e}")
         
         # Store latest processing results
         self.frame_data = {} # {0: frame, 1: frame, ...}
@@ -196,8 +205,10 @@ class VideoProcessor:
                             cv2.putText(frame, label, (vx1, vy1 - 10), 
                                         cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, 1)
                         
-                        # Encode
-                        _, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 60])
+                        # Adaptive JPEG quality: lower quality when more streams are active
+                        active_count = sum(1 for c in self.caps if c is not None)
+                        jpeg_quality = 45 if active_count > 2 else 70
+                        _, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), jpeg_quality])
                         self.frame_data[i] = buffer.tobytes()
                 except Exception as e:
                     print(f"Error in lane {i}: {e}")
@@ -219,6 +230,10 @@ class VideoProcessor:
     def get_lane_count(self, lane_id):
         return self.lane_data[lane_id]['count']
 
+    def get_active_stream_count(self):
+        """Return number of active video streams."""
+        return sum(1 for c in self.caps if c is not None and c.isOpened())
+
     def stop(self):
         self.running = False
         if self.thread:
@@ -227,3 +242,6 @@ class VideoProcessor:
             if cap:
                 cap.release()
         self.caps = [None] * 4
+
+    # Alias for backward compatibility
+    stop_all = stop

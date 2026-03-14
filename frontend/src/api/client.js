@@ -50,7 +50,7 @@ async function request(endpoint, options = {}) {
 
     // Handle CSV / non-JSON responses
     const contentType = res.headers.get('content-type') || '';
-    if (contentType.includes('text/csv')) {
+    if (contentType.includes('text/csv') || contentType.includes('text/html')) {
         return res.blob();
     }
 
@@ -103,6 +103,7 @@ export const analytics = {
         return request(`/reports_data?${qs}`);
     },
     exportCsv: () => request('/export_stats'),
+    generatePdf: () => request('/generate_pdf'),
     predictions: () => request('/predictions'),
     cityMap: () => request('/city_map_data'),
 };
@@ -138,6 +139,14 @@ export const settingsApi = {
         return request(`/audit_trail?${qs}`);
     },
     purgeData: () => request('/purge_data', { method: 'POST' }),
+};
+
+// ── Users (Admin) ──
+export const usersApi = {
+    list: () => request('/users'),
+    delete: (id) => request(`/users/${id}`, { method: 'DELETE' }),
+    toggleLock: (id) => request(`/users/${id}/toggle-lock`, { method: 'POST' }),
+    changeRole: (id, role) => request(`/users/${id}/change-role?role=${role}`, { method: 'POST' }),
 };
 
 // ── Health ──

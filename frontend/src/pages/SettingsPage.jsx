@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-    Brain, Monitor, CloudRain, Save, Shield, CheckCircle2, AlertTriangle, Clock, User, Activity, Server, Trash2, Loader2, Sun, CloudSnow, CloudFog
-} from 'lucide-react';
-import { settingsApi } from '../api/client';
+import { motion } from 'framer-motion';
+import { settingsApi, usersApi } from '../api/client';
 import { useToast } from '../context/ToastContext';
+import {
+    Settings, Save, Users, Shield, Trash2, Lock, Unlock, Eye, Volume2,
+    Brain, Gauge, Database, AlertTriangle, RefreshCw, Clock, TrafficCone,
+    ChevronDown, ChevronUp, Monitor
+} from 'lucide-react';
 
 export default function SettingsPage() {
     const [settings, setSettings] = useState({
@@ -18,305 +20,411 @@ export default function SettingsPage() {
         voice_alerts: true,
         auto_dispatch: true,
         data_retention: '30_days',
-        weather_condition: 'Clear'
     });
-
+    const [users, setUsers] = useState([]);
     const [auditLog, setAuditLog] = useState([]);
+    const [activeTab, setActiveTab] = useState('system');
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [purging, setPurging] = useState(false);
+    const [showPurgeConfirm, setShowPurgeConfirm] = useState(false);
     const { addToast } = useToast();
 
+    // Load everything on mount (matching old project behavior)
     useEffect(() => {
-        const fetchData = async () => {
+        const fetchAll = async () => {
             try {
-                const [settingsRes, auditRes] = await Promise.all([
-                    settingsApi.get(),
-                    settingsApi.auditTrail({ per_page: 20 })
+                const [settingsRes, usersRes, auditRes] = await Promise.all([
+                    settingsApi.get().catch(() => null),
+                    usersApi.list().catch(() => ({ users: [] })),
+                    settingsApi.auditTrail({ per_page: 20 }).catch(() => ({ entries: [] }))
                 ]);
-                setSettings(prev => ({ ...prev, ...settingsRes }));
+                // Merge API settings over defaults
+                if (settingsRes) {
+                    const loaded = settingsRes.settings || settingsRes;
+                    setSettings(prev => ({ ...prev, ...loaded }));
+                }
+                setUsers(usersRes.users || []);
                 setAuditLog(auditRes.entries || []);
-            } catch (err) { console.error("Failed to load settings:", err); }
+            } catch (err) { console.error(err); }
             finally { setLoading(false); }
         };
-        fetchData();
+        fetchAll();
     }, []);
-
-    const handleChange = (key, value) => {
-        setSettings(prev => ({ ...prev, [key]: value }));
-    };
 
     const handleSave = async () => {
         setSaving(true);
         try {
-            const payload = {
-                ...settings,
-                confidence_threshold: parseInt(settings.confidence_threshold),
-                ambulance_confidence: parseInt(settings.ambulance_confidence),
-                low_density_green: parseInt(settings.low_density_green),
-                medium_density_green: parseInt(settings.medium_density_green),
-                high_density_green: parseInt(settings.high_density_green),
-            };
-            await settingsApi.update(payload);
-            addToast('Changes saved successfully', 'success');
-            const auditRes = await settingsApi.auditTrail({ per_page: 20 });
-            setAuditLog(auditRes.entries || []);
-        } catch (err) {
-            addToast(err.message || 'Save failed', 'error');
-        } finally { setSaving(false); }
+            const res = await settingsApi.update(settings);
+            addToast('Settings saved successfully', 'success');
+            // Reload audit trail to show the settings_changed entry
+            try {
+                const auditRes = await settingsApi.auditTrail({ per_page: 20 });
+                setAuditLog(auditRes.entries || []);
+            } catch {}
+        } catch (err) { addToast('Failed to save: ' + err.message, 'error'); }
+        finally { setSaving(false); }
     };
 
     const handlePurge = async () => {
-        if (window.confirm('⚠️ This will permanently delete ALL historical traffic data.\n\nAre you sure?')) {
-            if (window.confirm('FINAL CONFIRMATION: This action cannot be undone.')) {
-                try {
-                    const res = await settingsApi.purgeData();
-                    alert(`Purged ${res.purged.lane_stats} records and ${res.purged.vehicle_logs} logs.`);
-                    const auditRes = await settingsApi.auditTrail({ per_page: 20 });
-                    setAuditLog(auditRes.entries || []);
-                } catch (err) { alert('Error purging data: ' + err.message); }
+        setPurging(true);
+        try {
+            const res = await settingsApi.purgeData();
+            if (res.purged) {
+                addToast(`Purged ${res.purged.lane_stats} records + ${res.purged.vehicle_logs} logs`, 'success');
+            } else {
+                addToast('All traffic data purged successfully', 'success');
             }
-        }
+            setShowPurgeConfirm(false);
+            // Refresh audit trail
+            try {
+                const auditRes = await settingsApi.auditTrail({ per_page: 20 });
+                setAuditLog(auditRes.entries || []);
+            } catch {}
+        } catch (err) { addToast('Purge failed: ' + err.message, 'error'); }
+        finally { setPurging(false); }
     };
 
-    if (loading) {
-        return (
-            <div className="flex h-full items-center justify-center">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="w-10 h-10 rounded-full border-2 border-[#E50914]/20 border-t-[#E50914] animate-spin" />
-                    <p className="text-xs text-gray-600 uppercase tracking-[0.3em] font-bold">Loading Settings</p>
-                </div>
-            </div>
-        );
-    }
+    const handleDeleteUser = async (id) => {
+        if (!confirm('Delete this user permanently?')) return;
+        try {
+            await usersApi.delete(id);
+            setUsers(prev => prev.filter(u => u.id !== id));
+            addToast('User deleted', 'success');
+        } catch (err) { addToast(err.message, 'error'); }
+    };
 
-    const weatherOptions = [
-        { id: 'Clear', label: 'Clear Sky', desc: '1.0× Base Timer', icon: Sun, color: '#E87C03' },
-        { id: 'Rain', label: 'Rainfall', desc: '1.25× Base Timer', icon: CloudRain, color: '#0071EB' },
-        { id: 'Fog', label: 'Dense Fog', desc: '1.35× Base Timer', icon: CloudFog, color: '#9B59B6' },
-        { id: 'Snow', label: 'Snowfall', desc: '1.50× Base Timer', icon: CloudSnow, color: '#46D369' },
+    const handleToggleLock = async (id) => {
+        try {
+            const res = await usersApi.toggleLock(id);
+            setUsers(prev => prev.map(u => u.id === id ? { ...u, is_locked: res.is_locked } : u));
+            addToast(res.is_locked ? 'User locked' : 'User unlocked', 'success');
+        } catch (err) { addToast(err.message, 'error'); }
+    };
+
+    const handleChangeRole = async (id, role) => {
+        try {
+            await usersApi.changeRole(id, role);
+            setUsers(prev => prev.map(u => u.id === id ? { ...u, role } : u));
+            addToast('Role updated', 'success');
+        } catch (err) { addToast(err.message, 'error'); }
+    };
+
+    const updateSetting = (key, value) => setSettings(prev => ({ ...prev, [key]: value }));
+
+    const tabs = [
+        { id: 'system', label: 'System', icon: Settings },
+        { id: 'users', label: 'Users', icon: Users },
+        { id: 'audit', label: 'Audit Trail', icon: Clock },
+        { id: 'danger', label: 'Danger Zone', icon: AlertTriangle },
     ];
 
+    if (loading) return (
+        <div className="flex items-center justify-center h-full">
+            <div className="w-12 h-12 border-2 border-[#E50914]/20 border-t-[#E50914] rounded-full animate-spin" />
+        </div>
+    );
+
     return (
-        <div className="p-6 lg:p-8 pb-32 max-w-6xl mx-auto">
-
-
-            {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 border-b border-white/[0.06] pb-6">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-4 lg:p-6 pb-12">
+            <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h1 className="text-3xl font-black tracking-[0.04em] text-white mb-1 flex items-center gap-3" style={{ fontFamily: 'var(--font-display)' }}>
-                        <Server className="text-[#E50914] w-7 h-7" />
-                        SYSTEM SETTINGS
-                    </h1>
-                    <p className="text-gray-500 text-sm font-medium">Configure AI parameters, signal logic, weather simulation, and audit trails.</p>
+                    <h2 className="text-3xl font-black tracking-[0.04em] text-white mb-1" style={{ fontFamily: 'var(--font-display)' }}>
+                        GLOBAL SETTINGS
+                    </h2>
+                    <p className="text-gray-500 text-sm">System configuration, user management, and audit trail.</p>
                 </div>
-
-                <button
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="mt-4 md:mt-0 px-6 py-2.5 bg-[#E50914] hover:bg-[#B20710] text-white font-bold rounded-xl flex items-center gap-2 transition-all disabled:opacity-50 shadow-[0_0_20px_rgba(229,9,20,0.3)] text-sm tracking-wide"
-                >
-                    {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                    {saving ? 'Saving...' : 'Save Changes'}
-                </button>
+                {activeTab === 'system' && (
+                    <button onClick={handleSave} disabled={saving}
+                        className="px-5 py-2.5 bg-[#46D369] hover:bg-[#3bb85a] text-white font-bold rounded-xl text-xs uppercase tracking-widest flex items-center gap-2 transition-all shadow-[0_0_15px_rgba(70,211,105,0.3)] disabled:opacity-50">
+                        {saving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
+                        Save Changes
+                    </button>
+                )}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
-                {/* AI Core */}
-                <div className="bg-[#181818] border border-white/[0.06] rounded-2xl p-6 shadow-lg">
-                    <h2 className="text-sm font-bold text-white mb-6 flex items-center gap-2 uppercase tracking-widest">
-                        <Brain className="text-[#0071EB] w-5 h-5" /> Core AI Parameters
-                    </h2>
-
-                    <div className="space-y-6">
-                        <div>
-                            <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">YOLO Model</label>
-                            <select
-                                value={settings.yolo_model}
-                                onChange={e => handleChange('yolo_model', e.target.value)}
-                                className="w-full bg-[#0a0a0a] border border-white/[0.08] rounded-xl px-4 py-3 text-white focus:border-[#E50914]/50 outline-none text-sm"
-                            >
-                                <option value="yolov8n">YOLOv8 Nano (Fastest)</option>
-                                <option value="yolov8s">YOLOv8 Small (Balanced)</option>
-                                <option value="yolov8m">YOLOv8 Medium (High Accuracy)</option>
-                                <option value="yolov8l">YOLOv8 Large (Max Precision)</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <div className="flex justify-between mb-2">
-                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Detection Confidence</label>
-                                <span className="text-white font-mono text-sm font-bold">{settings.confidence_threshold}%</span>
-                            </div>
-                            <input type="range" min="10" max="100" value={settings.confidence_threshold}
-                                onChange={e => handleChange('confidence_threshold', e.target.value)} className="w-full" />
-                        </div>
-
-                        <div>
-                            <div className="flex justify-between mb-2">
-                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Ambulance Confidence</label>
-                                <span className="text-white font-mono text-sm font-bold">{settings.ambulance_confidence}%</span>
-                            </div>
-                            <input type="range" min="10" max="100" value={settings.ambulance_confidence}
-                                onChange={e => handleChange('ambulance_confidence', e.target.value)} className="w-full" />
-                        </div>
-                    </div>
-                </div>
-
-                {/* Signal Timings */}
-                <div className="bg-[#181818] border border-white/[0.06] rounded-2xl p-6 shadow-lg">
-                    <h2 className="text-sm font-bold text-white mb-6 flex items-center gap-2 uppercase tracking-widest">
-                        <Activity className="text-[#46D369] w-5 h-5" /> Signal Timings
-                    </h2>
-
-                    <div className="space-y-5">
-                        {[
-                            { key: 'low_density_green', label: 'Low Density', color: '#46D369' },
-                            { key: 'medium_density_green', label: 'Medium Density', color: '#E87C03' },
-                            { key: 'high_density_green', label: 'High Density', color: '#E50914' },
-                        ].map(({ key, label, color }) => (
-                            <div key={key} className="flex items-center gap-4">
-                                <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
-                                <div className="flex-1">
-                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">{label}</label>
-                                    <div className="flex items-center gap-3">
-                                        <input
-                                            type="number" min="5" max="120"
-                                            value={settings[key]}
-                                            onChange={e => handleChange(key, e.target.value)}
-                                            className="flex-1 bg-[#0a0a0a] border border-white/[0.08] rounded-xl px-4 py-2.5 text-white focus:border-[#E50914]/50 outline-none text-sm font-mono"
-                                        />
-                                        <span className="text-xs text-gray-600 uppercase tracking-wider font-bold shrink-0">sec</span>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Weather */}
-                <div className="bg-[#181818] border border-[#0071EB]/15 rounded-2xl p-6 shadow-lg shadow-[#0071EB]/[0.02]">
-                    <h2 className="text-sm font-bold text-white mb-2 flex items-center gap-2 uppercase tracking-widest">
-                        <CloudRain className="text-[#0071EB] w-5 h-5" /> Weather Simulation
-                    </h2>
-                    <p className="text-xs text-gray-500 mb-5">Simulate weather conditions. AI adjusts green-light times for traffic safety.</p>
-
-                    <div className="grid grid-cols-2 gap-3">
-                        {weatherOptions.map(w => {
-                            const isSelected = settings.weather_condition === w.id;
-                            return (
-                                <button
-                                    key={w.id}
-                                    onClick={() => handleChange('weather_condition', w.id)}
-                                    className={`p-4 rounded-xl border text-left transition-all ${isSelected
-                                        ? 'border-current shadow-lg'
-                                        : 'bg-[#0a0a0a] border-white/[0.06] text-gray-400 hover:border-white/[0.15]'}`}
-                                    style={isSelected ? { backgroundColor: `${w.color}12`, borderColor: `${w.color}60`, color: w.color } : {}}
-                                >
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <w.icon className="w-4 h-4" />
-                                        <span className="font-bold text-sm">{w.label}</span>
-                                    </div>
-                                    <div className="text-xs opacity-60 font-mono">{w.desc}</div>
-                                </button>
-                            );
-                        })}
-                    </div>
-                </div>
-
-                {/* UI & Integrations */}
-                <div className="bg-[#181818] border border-white/[0.06] rounded-2xl p-6 shadow-lg">
-                    <h2 className="text-sm font-bold text-white mb-6 flex items-center gap-2 uppercase tracking-widest">
-                        <Monitor className="text-[#9B59B6] w-5 h-5" /> System Preferences
-                    </h2>
-
-                    <div className="space-y-5">
-                        {[
-                            { key: 'dark_mode', label: 'Dark Mode', desc: 'Force dark theme globally' },
-                            { key: 'auto_dispatch', label: 'Auto-Dispatch', desc: 'Auto-forward accident reports to drivers' },
-                        ].map(({ key, label, desc }) => (
-                            <div key={key} className="flex items-center justify-between">
-                                <div>
-                                    <div className="text-white font-semibold text-sm">{label}</div>
-                                    <div className="text-xs text-gray-600">{desc}</div>
-                                </div>
-                                <label className="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" className="sr-only peer" checked={settings[key]}
-                                        onChange={e => handleChange(key, e.target.checked)} />
-                                    <div className="w-10 h-5 bg-white/[0.08] rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-gray-500 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#E50914]/30 peer-checked:after:bg-[#E50914]"></div>
-                                </label>
-                            </div>
-                        ))}
-
-                        <div className="pt-4 border-t border-white/[0.06]">
-                            <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">Data Retention</label>
-                            <select
-                                value={settings.data_retention}
-                                onChange={e => handleChange('data_retention', e.target.value)}
-                                className="w-full bg-[#0a0a0a] border border-white/[0.08] rounded-xl px-4 py-3 text-white focus:border-[#E50914]/50 outline-none text-sm"
-                            >
-                                <option value="7_days">7 Days</option>
-                                <option value="30_days">30 Days</option>
-                                <option value="90_days">90 Days</option>
-                                <option value="forever">Never Delete</option>
-                            </select>
-                        </div>
-
-                        <button onClick={handlePurge}
-                            className="w-full py-3 rounded-xl border border-[#E50914]/25 text-[#E50914] font-bold hover:bg-[#E50914]/10 transition-all flex justify-center items-center gap-2 text-sm">
-                            <Trash2 className="w-4 h-4" /> Purge Historical Data
-                        </button>
-                    </div>
-                </div>
+            {/* Tabs */}
+            <div className="flex gap-1 bg-[#0a0a0a] rounded-xl p-1 mb-6 border border-white/[0.06] w-fit">
+                {tabs.map(tab => (
+                    <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                        className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest flex items-center gap-2 transition-all ${activeTab === tab.id ? 'bg-white/[0.08] text-white' : 'text-gray-500 hover:text-gray-300'}`}>
+                        <tab.icon className="w-4 h-4" /> {tab.label}
+                    </button>
+                ))}
             </div>
 
-            {/* Audit Trail */}
-            <div className="bg-[#181818] border border-white/[0.06] rounded-2xl overflow-hidden shadow-lg">
-                <div className="p-5 border-b border-white/[0.04] bg-white/[0.01]">
-                    <h2 className="text-sm font-bold text-white flex items-center gap-2 uppercase tracking-widest">
-                        <Shield className="text-[#E87C03] w-5 h-5" /> Admin Audit Trail
-                    </h2>
-                </div>
+            {/* System Settings Tab */}
+            {activeTab === 'system' && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {/* Core AI Parameters — matching old project exactly */}
+                    <div className="bg-[#181818] border border-white/[0.06] rounded-2xl p-5">
+                        <h3 className="text-sm font-bold text-white mb-5 pb-3 border-b border-white/[0.05] flex items-center gap-2">
+                            <Brain className="w-4 h-4 text-[#10b981]" /> Core AI Parameters
+                        </h3>
+                        <div className="space-y-5">
+                            <div>
+                                <label className="block text-xs text-gray-400 uppercase tracking-widest font-bold mb-2">YOLO Model Version</label>
+                                <select value={settings.yolo_model || 'yolov8s'}
+                                    onChange={e => updateSetting('yolo_model', e.target.value)}
+                                    className="w-full bg-black/20 border border-white/[0.1] rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-[#0071EB] transition-colors">
+                                    <option value="yolov8n">YOLOv8 Nano (Fastest)</option>
+                                    <option value="yolov8s">YOLOv8 Small (Balanced)</option>
+                                    <option value="yolov8m">YOLOv8 Medium (High Accuracy)</option>
+                                    <option value="yolov8l">YOLOv8 Large (Max Precision)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs text-gray-400 uppercase tracking-widest font-bold mb-2">Detection Confidence Threshold</label>
+                                <div className="flex items-center gap-3">
+                                    <input type="range" min="10" max="100" step="5"
+                                        value={settings.confidence_threshold || 45}
+                                        onChange={e => updateSetting('confidence_threshold', parseInt(e.target.value))}
+                                        className="flex-1 accent-[#0071EB]" />
+                                    <span className="text-white font-mono text-sm w-12 text-right">{settings.confidence_threshold || 45}%</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-xs text-gray-400 uppercase tracking-widest font-bold mb-2">Ambulance Emergency Priority Confidence</label>
+                                <div className="flex items-center gap-3">
+                                    <input type="range" min="10" max="100" step="5"
+                                        value={settings.ambulance_confidence || 65}
+                                        onChange={e => updateSetting('ambulance_confidence', parseInt(e.target.value))}
+                                        className="flex-1 accent-[#E50914]" />
+                                    <span className="text-white font-mono text-sm w-12 text-right">{settings.ambulance_confidence || 65}%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-                <div className="overflow-x-auto tv-scrollbar">
-                    <table className="w-full text-left">
-                        <thead className="bg-[#0d0d0d] text-xs uppercase text-gray-600 tracking-widest">
-                            <tr>
-                                <th className="px-5 py-3 font-bold">Timestamp</th>
-                                <th className="px-5 py-3 font-bold">Admin</th>
-                                <th className="px-5 py-3 font-bold">Action</th>
-                                <th className="px-5 py-3 font-bold w-1/3">Details</th>
-                                <th className="px-5 py-3 font-bold">IP Address</th>
+                    {/* Default Signal Timings — matching old project */}
+                    <div className="bg-[#181818] border border-white/[0.06] rounded-2xl p-5">
+                        <h3 className="text-sm font-bold text-white mb-5 pb-3 border-b border-white/[0.05] flex items-center gap-2">
+                            <Gauge className="w-4 h-4 text-[#f59e0b]" /> Default Signal Timings
+                        </h3>
+                        <div className="space-y-5">
+                            <div>
+                                <label className="block text-xs text-gray-400 uppercase tracking-widest font-bold mb-2">Low Density Green Time (seconds)</label>
+                                <input type="number" min="5" max="120"
+                                    value={settings.low_density_green || 15}
+                                    onChange={e => updateSetting('low_density_green', parseInt(e.target.value))}
+                                    className="w-full bg-black/20 border border-white/[0.1] rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-[#0071EB] transition-colors" />
+                            </div>
+                            <div>
+                                <label className="block text-xs text-gray-400 uppercase tracking-widest font-bold mb-2">Medium Density Green Time (seconds)</label>
+                                <input type="number" min="5" max="120"
+                                    value={settings.medium_density_green || 30}
+                                    onChange={e => updateSetting('medium_density_green', parseInt(e.target.value))}
+                                    className="w-full bg-black/20 border border-white/[0.1] rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-[#0071EB] transition-colors" />
+                            </div>
+                            <div>
+                                <label className="block text-xs text-gray-400 uppercase tracking-widest font-bold mb-2">High Density Green Time (seconds)</label>
+                                <input type="number" min="5" max="120"
+                                    value={settings.high_density_green || 45}
+                                    onChange={e => updateSetting('high_density_green', parseInt(e.target.value))}
+                                    className="w-full bg-black/20 border border-white/[0.1] rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-[#0071EB] transition-colors" />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* UI & Notifications — matching old project */}
+                    <div className="bg-[#181818] border border-white/[0.06] rounded-2xl p-5">
+                        <h3 className="text-sm font-bold text-white mb-5 pb-3 border-b border-white/[0.05] flex items-center gap-2">
+                            <Monitor className="w-4 h-4 text-[#9B59B6]" /> UI & Notifications
+                        </h3>
+                        <div className="space-y-1">
+                            {[
+                                { key: 'dark_mode', label: 'Dark Mode Enforcement', desc: 'Force dark theme across all system pages', icon: Eye },
+                                { key: 'voice_alerts', label: 'Voice Alerts', desc: 'Synthesized voice alerts for emergencies', icon: Volume2 },
+                                { key: 'auto_dispatch', label: 'Automated Dispatch', desc: 'Forward accident logs to ambulances automatically', icon: Shield },
+                            ].map(s => (
+                                <div key={s.key} className="flex items-center justify-between py-3 border-b border-white/[0.03] last:border-b-0">
+                                    <div>
+                                        <div className="text-sm text-white font-medium">{s.label}</div>
+                                        <div className="text-xs text-gray-500 mt-0.5">{s.desc}</div>
+                                    </div>
+                                    <div className="relative cursor-pointer" onClick={() => updateSetting(s.key, !settings[s.key])}>
+                                        <div className={`w-11 h-6 rounded-full border transition-all ${settings[s.key] !== false ? 'bg-[#0071EB]/20 border-[#0071EB]/50' : 'bg-white/[0.1] border-white/[0.2]'}`} />
+                                        <div className={`absolute top-1 w-4 h-4 rounded-full transition-all ${settings[s.key] !== false ? 'left-6 bg-[#0071EB] shadow-[0_0_8px_rgba(0,113,235,0.5)]' : 'left-1 bg-gray-500'}`} />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Database & Integrations — matching old project */}
+                    <div className="bg-[#181818] border border-white/[0.06] rounded-2xl p-5">
+                        <h3 className="text-sm font-bold text-white mb-5 pb-3 border-b border-white/[0.05] flex items-center gap-2">
+                            <Database className="w-4 h-4 text-[#E50914]" /> Database & Integrations
+                        </h3>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-xs text-gray-400 uppercase tracking-widest font-bold mb-2">Data Retention Policy</label>
+                                <select value={settings.data_retention || '30_days'}
+                                    onChange={e => updateSetting('data_retention', e.target.value)}
+                                    className="w-full bg-black/20 border border-white/[0.1] rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-[#0071EB] transition-colors">
+                                    <option value="7_days">Keep 7 days</option>
+                                    <option value="30_days">Keep 30 days</option>
+                                    <option value="90_days">Keep 90 days</option>
+                                    <option value="forever">Never Delete</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs text-gray-400 uppercase tracking-widest font-bold mb-2">Database Status</label>
+                                <div className="flex items-center gap-2 px-3 py-2.5 bg-[#10b981]/[0.08] border border-[#10b981]/20 rounded-lg">
+                                    <div className="w-2 h-2 rounded-full bg-[#10b981] animate-pulse" />
+                                    <span className="text-sm text-[#10b981] font-semibold">PostgreSQL Active — Connected</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Users Tab */}
+            {activeTab === 'users' && (
+                <div className="bg-[#181818] border border-white/[0.06] rounded-2xl overflow-hidden">
+                    <table className="w-full">
+                        <thead>
+                            <tr className="bg-white/[0.03] border-b border-white/[0.06]">
+                                <th className="text-left text-xs font-bold text-gray-400 uppercase tracking-widest px-5 py-3">User</th>
+                                <th className="text-left text-xs font-bold text-gray-400 uppercase tracking-widest px-5 py-3">Role</th>
+                                <th className="text-left text-xs font-bold text-gray-400 uppercase tracking-widest px-5 py-3">Status</th>
+                                <th className="text-left text-xs font-bold text-gray-400 uppercase tracking-widest px-5 py-3">Joined</th>
+                                <th className="text-right text-xs font-bold text-gray-400 uppercase tracking-widest px-5 py-3">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-white/[0.03] text-sm">
-                            {auditLog.length === 0 ? (
-                                <tr><td colSpan="5" className="px-5 py-10 text-center text-gray-600 text-sm">No audit events recorded.</td></tr>
-                            ) : auditLog.map(log => {
-                                const badgeColor = log.action.includes('override')
-                                    ? 'bg-[#E87C03]/10 text-[#E87C03] border-[#E87C03]/20'
-                                    : log.action.includes('settings')
-                                        ? 'bg-[#0071EB]/10 text-[#0071EB] border-[#0071EB]/20'
-                                        : log.action.includes('purge')
-                                            ? 'bg-[#E50914]/10 text-[#E50914] border-[#E50914]/20'
-                                            : 'bg-[#46D369]/10 text-[#46D369] border-[#46D369]/20';
-                                return (
-                                    <tr key={log.id} className="hover:bg-white/[0.02] transition-colors">
-                                        <td className="px-5 py-3 text-gray-500 font-mono text-xs whitespace-nowrap">{log.timestamp}</td>
-                                        <td className="px-5 py-3 text-white font-medium text-sm">{log.user}</td>
-                                        <td className="px-5 py-3">
-                                            <span className={`px-3 py-1 text-xs font-bold rounded-md uppercase tracking-wider border ${badgeColor}`}>
-                                                {log.action.replace(/_/g, ' ')}
-                                            </span>
-                                        </td>
-                                        <td className="px-5 py-3 text-gray-500 max-w-sm truncate text-xs">{log.details || '—'}</td>
-                                        <td className="px-5 py-3 text-gray-600 font-mono text-xs">{log.ip || '—'}</td>
-                                    </tr>
-                                );
-                            })}
+                        <tbody>
+                            {users.length === 0 ? (
+                                <tr><td colSpan={5} className="text-center py-12 text-gray-500 text-sm">No users found.</td></tr>
+                            ) : users.map(u => (
+                                <tr key={u.id} className="border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors">
+                                    <td className="px-5 py-3">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded bg-[#0071EB]/10 flex items-center justify-center text-[#0071EB] font-bold text-sm">
+                                                {u.username[0].toUpperCase()}
+                                            </div>
+                                            <div>
+                                                <div className="text-sm font-bold text-white">{u.username}</div>
+                                                <div className="text-xs text-gray-500">{u.full_name || ''}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-5 py-3">
+                                        <select value={u.role} onChange={e => handleChangeRole(u.id, e.target.value)}
+                                            className="bg-[#2a2a2a] border border-white/[0.08] rounded-lg px-2 py-1 text-xs text-white focus:outline-none">
+                                            <option value="admin">Admin</option>
+                                            <option value="user">User</option>
+                                            <option value="ambulance_driver">Ambulance Driver</option>
+                                        </select>
+                                    </td>
+                                    <td className="px-5 py-3">
+                                        <span className={`text-[10px] font-black uppercase tracking-widest py-1 px-3 rounded-md ${u.is_locked ? 'bg-[#E50914]/10 text-[#E50914]' : 'bg-[#46D369]/10 text-[#46D369]'}`}>
+                                            {u.is_locked ? 'Locked' : 'Active'}
+                                        </span>
+                                    </td>
+                                    <td className="px-5 py-3 text-sm text-gray-400 font-mono">{u.created_at?.split(' ')[0] || '—'}</td>
+                                    <td className="px-5 py-3 text-right">
+                                        <div className="flex gap-2 justify-end">
+                                            <button onClick={() => handleToggleLock(u.id)} title={u.is_locked ? 'Unlock' : 'Lock'}
+                                                className="p-1.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] rounded-lg transition-all">
+                                                {u.is_locked ? <Unlock className="w-3.5 h-3.5 text-[#46D369]" /> : <Lock className="w-3.5 h-3.5 text-[#E87C03]" />}
+                                            </button>
+                                            <button onClick={() => handleDeleteUser(u.id)} title="Delete"
+                                                className="p-1.5 bg-[#E50914]/5 hover:bg-[#E50914]/15 border border-[#E50914]/20 rounded-lg transition-all">
+                                                <Trash2 className="w-3.5 h-3.5 text-[#E50914]" />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
                         </tbody>
                     </table>
                 </div>
-            </div>
-        </div>
+            )}
+
+            {/* Audit Trail Tab — matching old project's audit table */}
+            {activeTab === 'audit' && (
+                <div className="bg-[#181818] border border-white/[0.06] rounded-2xl overflow-hidden">
+                    <div className="overflow-y-auto tv-scrollbar" style={{ maxHeight: '600px' }}>
+                        <table className="w-full">
+                            <thead className="sticky top-0 bg-[#181818]">
+                                <tr className="bg-white/[0.03] border-b border-white/[0.06]">
+                                    <th className="text-left text-xs font-bold text-gray-400 uppercase tracking-widest px-5 py-3">Timestamp</th>
+                                    <th className="text-left text-xs font-bold text-gray-400 uppercase tracking-widest px-5 py-3">Admin</th>
+                                    <th className="text-left text-xs font-bold text-gray-400 uppercase tracking-widest px-5 py-3">Action</th>
+                                    <th className="text-left text-xs font-bold text-gray-400 uppercase tracking-widest px-5 py-3">Details</th>
+                                    <th className="text-left text-xs font-bold text-gray-400 uppercase tracking-widest px-5 py-3">IP Address</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {auditLog.length === 0 ? (
+                                    <tr><td colSpan={5} className="text-center py-12 text-gray-500 text-sm">
+                                        <Shield className="w-6 h-6 mx-auto mb-2 text-gray-600" />
+                                        No audit events recorded yet.
+                                    </td></tr>
+                                ) : auditLog.map((entry, i) => {
+                                    const badgeColor = entry.action?.includes('override') ? 'bg-[#f59e0b]/10 text-[#f59e0b]' :
+                                        entry.action?.includes('dispatch') ? 'bg-[#E50914]/10 text-[#E50914]' :
+                                        entry.action?.includes('settings') ? 'bg-[#0071EB]/10 text-[#0071EB]' :
+                                        entry.action?.includes('purge') ? 'bg-[#E50914]/10 text-[#E50914]' :
+                                        'bg-[#10b981]/10 text-[#10b981]';
+                                    return (
+                                        <tr key={entry.id || i} className="border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors">
+                                            <td className="px-5 py-3 text-xs text-gray-400 font-mono">
+                                                <Clock className="w-3 h-3 inline-block mr-1 opacity-50" />{entry.timestamp}
+                                            </td>
+                                            <td className="px-5 py-3 text-sm text-white font-bold">{entry.user || 'System'}</td>
+                                            <td className="px-5 py-3">
+                                                <span className={`text-[10px] font-black uppercase tracking-widest py-1 px-2.5 rounded-md ${badgeColor}`}>
+                                                    {(entry.action || '—').replace(/_/g, ' ')}
+                                                </span>
+                                            </td>
+                                            <td className="px-5 py-3 text-xs text-gray-400 max-w-[250px] truncate">{entry.details || '—'}</td>
+                                            <td className="px-5 py-3 text-xs text-gray-500 font-mono">{entry.ip || '—'}</td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
+
+            {/* Danger Zone Tab */}
+            {activeTab === 'danger' && (
+                <div className="bg-[#181818] border border-[#E50914]/20 rounded-2xl p-6">
+                    <h3 className="text-lg font-bold text-[#E50914] mb-2 flex items-center gap-2">
+                        <AlertTriangle className="w-5 h-5" /> Danger Zone
+                    </h3>
+                    <p className="text-gray-400 text-sm mb-6">These actions are irreversible. Proceed with caution.</p>
+
+                    <div className="bg-[#E50914]/5 border border-[#E50914]/10 rounded-xl p-5">
+                        <h4 className="text-white font-bold mb-1">Purge All Historical Data</h4>
+                        <p className="text-gray-500 text-sm mb-4">This will permanently delete ALL historical traffic data including lane statistics and vehicle logs. This cannot be undone.</p>
+                        {showPurgeConfirm ? (
+                            <div className="space-y-3">
+                                <p className="text-[#E50914] text-sm font-bold">⚠️ FINAL CONFIRMATION: Press "Yes, Purge Everything" to permanently delete all data.</p>
+                                <div className="flex items-center gap-3">
+                                    <button onClick={handlePurge} disabled={purging}
+                                        className="px-4 py-2 bg-[#E50914] text-white font-bold rounded-lg text-xs uppercase tracking-widest hover:bg-[#B20710] transition-all disabled:opacity-50 flex items-center gap-2">
+                                        {purging ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                                        Yes, Purge Everything
+                                    </button>
+                                    <button onClick={() => setShowPurgeConfirm(false)}
+                                        className="px-4 py-2 bg-white/[0.05] text-white font-bold rounded-lg text-xs uppercase tracking-widest hover:bg-white/[0.08] transition-all">
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <button onClick={() => setShowPurgeConfirm(true)}
+                                className="px-6 py-2.5 bg-[#E50914]/10 text-[#E50914] border border-[#E50914]/30 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-[#E50914]/20 transition-all flex items-center gap-2">
+                                <Trash2 className="w-4 h-4" /> Purge Historical Data
+                            </button>
+                        )}
+                    </div>
+                </div>
+            )}
+        </motion.div>
     );
 }
