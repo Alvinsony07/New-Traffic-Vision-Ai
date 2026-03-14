@@ -77,7 +77,8 @@ export default function UserDashboard() {
                 addToast('Location detected', 'success');
                 setGettingLocation(false);
             },
-            () => { addToast('Unable to get location', 'warning'); setGettingLocation(false); }
+            () => { addToast('Unable to get location', 'warning'); setGettingLocation(false); },
+            { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
         );
     };
 

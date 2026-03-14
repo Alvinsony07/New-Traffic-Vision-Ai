@@ -20,6 +20,7 @@ export default function SettingsPage() {
         voice_alerts: true,
         auto_dispatch: true,
         data_retention: '30_days',
+        weather_condition: 'Clear',
     });
     const [users, setUsers] = useState([]);
     const [auditLog, setAuditLog] = useState([]);
@@ -222,6 +223,18 @@ export default function SettingsPage() {
                                     value={settings.high_density_green || 45}
                                     onChange={e => updateSetting('high_density_green', parseInt(e.target.value))}
                                     className="w-full bg-black/20 border border-white/[0.1] rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-[#0071EB] transition-colors" />
+                            </div>
+                            <div>
+                                <label className="block text-xs text-gray-400 uppercase tracking-widest font-bold mb-2">Weather Condition (Adjusts Signal Timing)</label>
+                                <select value={settings.weather_condition || 'Clear'}
+                                    onChange={e => updateSetting('weather_condition', e.target.value)}
+                                    className="w-full bg-black/20 border border-white/[0.1] rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-[#0071EB] transition-colors">
+                                    <option value="Clear">☀️ Clear (1.0x timing)</option>
+                                    <option value="Rain">🌧️ Rain (1.25x timing)</option>
+                                    <option value="Fog">🌫️ Fog (1.35x timing)</option>
+                                    <option value="Snow">❄️ Snow (1.5x timing)</option>
+                                </select>
+                                <p className="text-xs text-gray-600 mt-1">Adverse weather increases green time for safer traffic flow.</p>
                             </div>
                         </div>
                     </div>

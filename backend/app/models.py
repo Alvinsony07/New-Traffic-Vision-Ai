@@ -50,7 +50,7 @@ class VehicleLog(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     lane_id = Column(Integer, nullable=False)
-    vehicle_type = Column(String(50), nullable=False)
+    vehicle_type = Column(String(50), nullable=False, index=True)  # Indexed: grouped in stats
     count = Column(Integer, default=1)
     timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
@@ -76,7 +76,7 @@ class AccidentReport(Base):
     description = Column(Text, nullable=True)
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
-    status = Column(String(20), default="Reported")          # Reported | Verified | Resolved
+    status = Column(String(20), default="Reported", index=True)   # Indexed: filtered in city_map/dashboard
     timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     user = relationship("User", back_populates="reports")
@@ -94,7 +94,7 @@ class DispatchLog(Base):
     accident_lat = Column(Float, nullable=True)
     accident_lng = Column(Float, nullable=True)
     distance_km = Column(Float, nullable=True)
-    status = Column(String(20), default="Dispatched")        # Dispatched | En Route | Arrived | ...
+    status = Column(String(20), default="Dispatched", index=True)  # Indexed: filtered in active_dispatches
     timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     report = relationship("AccidentReport", back_populates="dispatches")
@@ -111,7 +111,7 @@ class AuditLog(Base):
     action = Column(String(100), nullable=False)
     details = Column(Text, nullable=True)
     ip_address = Column(String(45), nullable=True)
-    timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)  # Indexed: ordered desc
 
     user = relationship("User", back_populates="audit_logs")
 
@@ -123,3 +123,19 @@ class SystemSetting(Base):
     key = Column(String(100), unique=True, nullable=False)
     value = Column(Text, nullable=True)
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+
+# ──────────────────────────────────────────────
+#  Number Plate Detection (ANPR)
+# ──────────────────────────────────────────────
+class NumberPlateLog(Base):
+    __tablename__ = "number_plate_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    plate_number = Column(String(20), nullable=False, index=True)
+    lane_id = Column(Integer, nullable=True)
+    camera_source = Column(String(255), nullable=True)
+    confidence = Column(Float, nullable=True)
+    snapshot_path = Column(String(500), nullable=True)
+    timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
+

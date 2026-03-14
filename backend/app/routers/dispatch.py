@@ -2,7 +2,7 @@
 Dispatch Router — Ambulance dispatch CRUD & status updates
 """
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from ..database import get_db
 from ..models import User, AccidentReport, DispatchLog, AuditLog
@@ -50,7 +50,7 @@ def create_report(
 # ──────────────────────────────────────
 @router.get("/reports")
 def list_reports(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    reports = db.query(AccidentReport).order_by(AccidentReport.timestamp.desc()).limit(20).all()
+    reports = db.query(AccidentReport).options(joinedload(AccidentReport.user)).order_by(AccidentReport.timestamp.desc()).limit(20).all()
     return {
         "reports": [
             {
@@ -113,6 +113,7 @@ def create_dispatch(
 def active_dispatches(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     dispatches = (
         db.query(DispatchLog)
+        .options(joinedload(DispatchLog.report))
         .filter(DispatchLog.status.in_(["Dispatched", "En Route", "Arrived", "Patient Loaded"]))
         .order_by(DispatchLog.timestamp.desc())
         .all()

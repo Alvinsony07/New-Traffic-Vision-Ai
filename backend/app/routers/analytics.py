@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, extract
 
 from ..database import get_db
-from ..models import User, LaneStats, VehicleLog, DispatchLog, AccidentReport
+from ..models import User, LaneStats, VehicleLog, DispatchLog, AccidentReport, NumberPlateLog
 from ..auth import get_current_user, get_current_admin
 
 router = APIRouter(prefix="/api", tags=["Analytics"])
@@ -260,11 +260,12 @@ def get_predictions(db: Session = Depends(get_db), current_user: User = Depends(
 @router.get("/city_map_data")
 def city_map_data(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     from .dashboard import _signal_controller, _video_processor
+    from sqlalchemy.orm import joinedload as jl
 
     status = _signal_controller.get_status() if _signal_controller else {}
     lane_data = _video_processor.lane_data if _video_processor else {}
 
-    reports = db.query(AccidentReport).order_by(AccidentReport.timestamp.desc()).limit(20).all()
+    reports = db.query(AccidentReport).options(jl(AccidentReport.user)).order_by(AccidentReport.timestamp.desc()).limit(20).all()
     reports_data = [
         {
             "id": r.id,
@@ -383,3 +384,39 @@ def change_user_role(user_id: int, role: str = Query(...), db: Session = Depends
     user.role = role
     db.commit()
     return {"success": True, "role": role}
+
+
+# ──────────────────────────────────────
+#  ANPR — Number Plate Logs
+# ──────────────────────────────────────
+@router.get("/plate_logs")
+def get_plate_logs(
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
+    search: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get paginated number plate detection logs."""
+    q = db.query(NumberPlateLog)
+    if search:
+        q = q.filter(NumberPlateLog.plate_number.ilike(f"%{search}%"))
+    total = q.count()
+    logs = q.order_by(NumberPlateLog.timestamp.desc()).offset((page - 1) * per_page).limit(per_page).all()
+    return {
+        "total": total,
+        "page": page,
+        "per_page": per_page,
+        "logs": [
+            {
+                "id": l.id,
+                "plate_number": l.plate_number,
+                "lane_id": l.lane_id,
+                "camera_source": l.camera_source,
+                "confidence": l.confidence,
+                "timestamp": l.timestamp.isoformat() if l.timestamp else None
+            }
+            for l in logs
+        ]
+    }
+

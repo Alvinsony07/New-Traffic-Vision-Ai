@@ -4,5 +4,11 @@
     "python.venvPath": ".",
     "python.venvFolders": [
         "venv"
-    ]
+    ],
+    "python.analysis.extraPaths": [
+        "./backend",
+        "./backend/app"
+    ],
+    "python.analysis.typeCheckingMode": "off",
+    "python.languageServer": "Pylance"
 }

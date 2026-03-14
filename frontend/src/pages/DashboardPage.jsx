@@ -72,7 +72,7 @@ export default function DashboardPage({ manualMode = false }) {
             } catch (err) { console.error("Failed to fetch status:", err); }
         };
         fetchData();
-        const interval = setInterval(fetchData, 1000);
+        const interval = setInterval(fetchData, 2000);  // 2s is responsive enough (was 1s)
         return () => clearInterval(interval);
     }, []);
 
@@ -191,7 +191,7 @@ export default function DashboardPage({ manualMode = false }) {
         if (!map || !L) return;
 
         if (mapTracking) {
-            map.locate({ watch: true, setView: true, maxZoom: 16 });
+            map.locate({ watch: true, setView: true, maxZoom: 16, enableHighAccuracy: true, maximumAge: 0 });
             const onFound = (e) => {
                 const radius = e.accuracy / 2;
                 if (userMarkerRef.current) map.removeLayer(userMarkerRef.current);
@@ -226,16 +226,26 @@ export default function DashboardPage({ manualMode = false }) {
         }
     }, [mapTracking, addToast]);
 
-    // Update map markers for incidents
+    // Update map markers for incidents (diff-based — only add/remove changed markers)
     useEffect(() => {
         const map = mapInstanceRef.current;
         const L = window.L;
         if (!map || !L) return;
-        // Remove old markers
-        Object.values(markersRef.current).forEach(m => map.removeLayer(m));
-        markersRef.current = {};
+        
+        // Collect current report IDs
+        const currentIds = new Set(incidentReports.filter(r => r.latitude && r.longitude).map(r => r.id));
+        
+        // Remove markers for reports that no longer exist
+        Object.keys(markersRef.current).forEach(id => {
+            if (!currentIds.has(Number(id))) {
+                map.removeLayer(markersRef.current[id]);
+                delete markersRef.current[id];
+            }
+        });
+        
+        // Add markers for new reports only
         incidentReports.forEach(r => {
-            if (r.latitude && r.longitude) {
+            if (r.latitude && r.longitude && !markersRef.current[r.id]) {
                 const color = r.status === 'Resolved' ? '#10b981' : (r.status === 'Verified' ? '#f59e0b' : '#ef4444');
                 const marker = L.circleMarker([r.latitude, r.longitude], {
                     radius: 8, fillColor: color, color: '#fff', weight: 1, opacity: 1, fillOpacity: 0.8

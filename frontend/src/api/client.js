@@ -106,6 +106,10 @@ export const analytics = {
     generatePdf: () => request('/generate_pdf'),
     predictions: () => request('/predictions'),
     cityMap: () => request('/city_map_data'),
+    plateLogs: (params = {}) => {
+        const qs = new URLSearchParams(params).toString();
+        return request(`/plate_logs?${qs}`);
+    },
 };
 
 // ── Dispatch ──

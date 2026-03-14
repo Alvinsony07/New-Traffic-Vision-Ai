@@ -6,6 +6,7 @@ from fastapi.responses import StreamingResponse, Response
 from sqlalchemy.orm import Session
 import os
 import shutil
+import re
 
 from ..database import get_db
 from ..models import User
@@ -13,6 +14,17 @@ from ..schemas import SignalOverride
 from ..auth import get_current_user, get_current_admin
 
 router = APIRouter(prefix="/api", tags=["Dashboard"])
+
+# Allowed video extensions (matches old project)
+ALLOWED_VIDEO_EXTENSIONS = {'mp4', 'avi', 'mov', 'mkv', 'webm'}
+
+def _secure_filename(filename: str) -> str:
+    """Sanitize filename to prevent path traversal — reimplements werkzeug.secure_filename."""
+    # Remove path separators and keep only safe characters
+    filename = filename.replace('/', '_').replace('\\', '_')
+    filename = re.sub(r'[^\w\s\-.]', '', filename).strip()
+    filename = re.sub(r'[\s]+', '_', filename)
+    return filename or 'upload'
 
 # ── References to runtime objects (injected at startup via main.py) ──
 _signal_controller = None
@@ -98,7 +110,17 @@ def setup_streams(
             else:
                 final_sources.append(cam)
         elif vid and vid.filename:
-            file_path = os.path.join(upload_dir, vid.filename)
+            safe_name = _secure_filename(vid.filename)
+            if not safe_name:
+                final_sources.append(None)
+                continue
+            # Validate file extension — matches old project's ALLOWED_VIDEO_EXTENSIONS check
+            ext = safe_name.rsplit('.', 1)[-1].lower() if '.' in safe_name else ''
+            if ext not in ALLOWED_VIDEO_EXTENSIONS:
+                print(f"Rejected upload: invalid extension '.{ext}'")
+                final_sources.append(None)
+                continue
+            file_path = os.path.join(upload_dir, safe_name)
             with open(file_path, "wb") as buffer:
                 shutil.copyfileobj(vid.file, buffer)
             final_sources.append(file_path)

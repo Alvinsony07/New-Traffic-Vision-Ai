@@ -4,7 +4,7 @@ Settings Router — System settings, audit trail, data purge
 import json
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from ..database import get_db
 from ..models import User, AuditLog, SystemSetting, LaneStats, VehicleLog
@@ -109,6 +109,7 @@ def audit_trail(
 
     logs = (
         db.query(AuditLog)
+        .options(joinedload(AuditLog.user))
         .order_by(AuditLog.timestamp.desc())
         .offset((page - 1) * per_page)
         .limit(per_page)
