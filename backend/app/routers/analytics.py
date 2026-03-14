@@ -420,3 +420,171 @@ def get_plate_logs(
         ]
     }
 
+
+# ──────────────────────────────────────
+#  Traffic Intelligence — AI Insights
+# ──────────────────────────────────────
+@router.get("/traffic_intelligence")
+def get_traffic_intelligence(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Generate real-time traffic AI insights from historical data."""
+    now = dt.utcnow()
+    hour_ago = now - timedelta(hours=1)
+    day_ago = now - timedelta(days=1)
+
+    # Recent lane stats (last hour)
+    recent_stats = db.query(LaneStats).filter(
+        LaneStats.timestamp >= hour_ago
+    ).order_by(LaneStats.timestamp.desc()).limit(200).all()
+
+    # Lane utilization analysis
+    lane_loads = {}
+    for s in recent_stats:
+        lid = s.lane_id
+        if lid not in lane_loads:
+            lane_loads[lid] = {"counts": [], "densities": []}
+        lane_loads[lid]["counts"].append(s.vehicle_count or 0)
+        lane_loads[lid]["densities"].append(s.density or "Low")
+
+    lane_analysis = []
+    for lid in range(1, 5):
+        data = lane_loads.get(lid, {"counts": [0], "densities": ["Low"]})
+        counts = data["counts"]
+        avg = sum(counts) / len(counts) if counts else 0
+        peak = max(counts) if counts else 0
+        high_pct = sum(1 for d in data["densities"] if d == "High") / max(len(data["densities"]), 1) * 100
+        trend = "increasing" if len(counts) >= 3 and counts[0] > counts[-1] * 1.2 else \
+                "decreasing" if len(counts) >= 3 and counts[0] < counts[-1] * 0.8 else "stable"
+        lane_analysis.append({
+            "lane_id": lid,
+            "avg_vehicles": round(avg, 1),
+            "peak_vehicles": peak,
+            "congestion_percentage": round(high_pct, 1),
+            "trend": trend,
+            "risk": "HIGH" if high_pct > 60 else "MEDIUM" if high_pct > 30 else "LOW"
+        })
+
+    # Congestion risk (overall)
+    all_counts = [s.vehicle_count for s in recent_stats if s.vehicle_count]
+    avg_all = sum(all_counts) / len(all_counts) if all_counts else 0
+    congestion_risk = "CRITICAL" if avg_all > 25 else "HIGH" if avg_all > 18 else "MODERATE" if avg_all > 10 else "LOW"
+
+    # Daily traffic pattern
+    daily_stats = db.query(
+        extract('hour', LaneStats.timestamp).label('hour'),
+        func.avg(LaneStats.vehicle_count).label('avg_count')
+    ).filter(
+        LaneStats.timestamp >= day_ago
+    ).group_by('hour').order_by('hour').all()
+
+    daily_pattern = [{"hour": int(h), "avg_vehicles": round(float(a), 1)} for h, a in daily_stats]
+
+    # Anomaly detection: find lanes with sudden spikes
+    anomalies = []
+    for la in lane_analysis:
+        if la["peak_vehicles"] > la["avg_vehicles"] * 2.5 and la["peak_vehicles"] > 15:
+            anomalies.append({
+                "lane_id": la["lane_id"],
+                "type": "traffic_spike",
+                "severity": "high",
+                "description": f"Lane {la['lane_id']}: Peak ({la['peak_vehicles']}) is {la['peak_vehicles']/max(la['avg_vehicles'],1):.1f}x above average ({la['avg_vehicles']})"
+            })
+
+    # Smart signal timing recommendations
+    recommendations = []
+    sorted_lanes = sorted(lane_analysis, key=lambda x: x["avg_vehicles"], reverse=True)
+    if sorted_lanes and sorted_lanes[0]["avg_vehicles"] > sorted_lanes[-1]["avg_vehicles"] * 2:
+        recommendations.append({
+            "type": "signal_timing",
+            "priority": "high",
+            "message": f"Lane {sorted_lanes[0]['lane_id']} has {sorted_lanes[0]['avg_vehicles']:.0f} avg vehicles — consider extending green time."
+        })
+    if congestion_risk in ("HIGH", "CRITICAL"):
+        recommendations.append({
+            "type": "congestion_alert",
+            "priority": "critical",
+            "message": f"Overall congestion is {congestion_risk}. Consider activating alternate routes or signal optimization."
+        })
+
+    # Incident correlation
+    recent_incidents = db.query(AccidentReport).filter(
+        AccidentReport.timestamp >= day_ago,
+        AccidentReport.status != "Resolved"
+    ).count()
+
+    return {
+        "generated_at": now.isoformat(),
+        "congestion_risk": congestion_risk,
+        "avg_vehicle_load": round(avg_all, 1),
+        "lane_analysis": lane_analysis,
+        "daily_pattern": daily_pattern,
+        "anomalies": anomalies,
+        "recommendations": recommendations,
+        "active_incidents": recent_incidents,
+        "data_points_analyzed": len(recent_stats)
+    }
+
+
+# ──────────────────────────────────────
+#  ANPR Statistics Dashboard
+# ──────────────────────────────────────
+@router.get("/anpr_stats")
+def get_anpr_stats(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """ANPR dashboard statistics."""
+    now = dt.utcnow()
+    day_ago = now - timedelta(days=1)
+
+    total_plates = db.query(NumberPlateLog).count()
+    today_plates = db.query(NumberPlateLog).filter(
+        NumberPlateLog.timestamp >= day_ago
+    ).count()
+
+    # Unique plates
+    unique_plates = db.query(func.count(func.distinct(NumberPlateLog.plate_number))).scalar() or 0
+
+    # Top frequent plates (most seen)
+    top_plates = db.query(
+        NumberPlateLog.plate_number,
+        func.count(NumberPlateLog.id).label('count')
+    ).group_by(NumberPlateLog.plate_number).order_by(
+        func.count(NumberPlateLog.id).desc()
+    ).limit(10).all()
+
+    # Detections per lane
+    lane_counts = db.query(
+        NumberPlateLog.lane_id,
+        func.count(NumberPlateLog.id).label('count')
+    ).group_by(NumberPlateLog.lane_id).all()
+
+    # Average confidence
+    avg_conf = db.query(func.avg(NumberPlateLog.confidence)).scalar()
+
+    # Recent activity (last 5)
+    recent = db.query(NumberPlateLog).order_by(
+        NumberPlateLog.timestamp.desc()
+    ).limit(5).all()
+
+    return {
+        "total_detections": total_plates,
+        "today_detections": today_plates,
+        "unique_plates": unique_plates,
+        "avg_confidence": round(float(avg_conf or 0), 2),
+        "top_frequent": [{"plate": p, "count": c} for p, c in top_plates],
+        "per_lane": {str(lid): cnt for lid, cnt in lane_counts},
+        "recent": [
+            {
+                "plate_number": r.plate_number,
+                "lane_id": r.lane_id,
+                "confidence": r.confidence,
+                "timestamp": r.timestamp.isoformat() if r.timestamp else None
+            }
+            for r in recent
+        ]
+    }
+
+

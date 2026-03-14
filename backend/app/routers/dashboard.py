@@ -152,21 +152,25 @@ def video_snapshot(lane_id: int):
 #  GET /api/video_feed/{lane_id}  (MJPEG stream)
 # ──────────────────────────────────────
 def _gen_frames(lane_id: int):
-    """Generator for MJPEG stream."""
+    """Generator for MJPEG stream — optimized for stability."""
     import time
     idle = 0
+    last_frame = None
     while _video_processor and _video_processor.running:
         frame_bytes = _video_processor.get_frame(lane_id)
         if frame_bytes:
             idle = 0
-            yield (b"--frame\r\n"
-                   b"Content-Type: image/jpeg\r\n\r\n" + frame_bytes + b"\r\n")
-            time.sleep(0.04)  # ~25 FPS lock to prevent browser socket hanging
+            # Only send if frame actually changed (avoids unnecessary bandwidth)
+            if frame_bytes is not last_frame:
+                last_frame = frame_bytes
+                yield (b"--frame\r\n"
+                       b"Content-Type: image/jpeg\r\n\r\n" + frame_bytes + b"\r\n")
+            time.sleep(0.04)  # ~25 FPS cap
         else:
             idle += 1
-            if idle > 300:
+            if idle > 150:  # 30 seconds at 0.2s sleep
                 break
-            time.sleep(0.1)
+            time.sleep(0.2)  # Slower poll when no frames
 
 
 @router.get("/video_feed/{lane_id}")
@@ -176,4 +180,6 @@ def video_feed(lane_id: int):
     return StreamingResponse(
         _gen_frames(lane_id),
         media_type="multipart/x-mixed-replace; boundary=frame",
+        headers={"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache", "Expires": "0"}
     )
+

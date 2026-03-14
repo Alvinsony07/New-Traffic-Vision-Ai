@@ -4,6 +4,8 @@ import threading
 import time
 from .vehicle_detector import VehicleDetector
 from .ambulance_detector import AmbulanceDetector
+from .plate_detector import PlateDetector
+from .box_tracker import BoxTracker
 from .traffic_logic import TrafficLogic
 from ..database import SessionLocal
 from ..models import LaneStats, VehicleLog, AmbulanceEvent
@@ -16,7 +18,13 @@ class VideoProcessor:
         self.vehicle_detector = VehicleDetector(config.MODEL_VEHICLE_PATH)
         self.ambulance_detector = AmbulanceDetector(config.MODEL_AMBULANCE_PATH)
         self.traffic_logic = TrafficLogic(config)
-        
+
+        # ── ANPR: Share EasyOCR reader from AmbulanceDetector ──
+        self.plate_detector = PlateDetector(save_snapshots=True)
+        if self.ambulance_detector.ocr_ready:
+            self.plate_detector.set_ocr_reader(self.ambulance_detector.reader)
+            print("🔍 ANPR: Using shared EasyOCR reader from AmbulanceDetector")
+
         # ── Model Warmup (eliminates cold-start latency) ──
         try:
             dummy_frame = np.zeros((270, 480, 3), dtype=np.uint8)
@@ -30,6 +38,8 @@ class VideoProcessor:
         # Updated to include 'details' for broken down counts
         self.lane_data = {i: {'count': 0, 'density': 'Low', 'details': {}} for i in range(4)}
         self.ambulance_active = [False] * 4 # Track ambulance state per lane
+        self.plate_detections = {i: [] for i in range(4)}  # Latest ANPR results per lane
+        self.box_tracker = BoxTracker(iou_threshold=0.3, max_age=3)  # Temporal smoothing
         
         self.caps = [None] * 4
         self.sources = [None] * 4 # Paths to video files
@@ -150,6 +160,9 @@ class VideoProcessor:
                             # or just separate them. Vehicles are already classified by YOLO)
                             cached_boxes[i]['vehicles'] = veh_data_list
 
+                            # ── Update box tracker for smooth drawing ──
+                            self.box_tracker.update(i, veh_data_list)
+
                             # Start Counting Logic
                             # If ambulance is found, technically it was counted as a 'truck' or 'car' usually.
                             # We can leave the count as is, or adjust. 
@@ -160,7 +173,18 @@ class VideoProcessor:
                             self.lane_data[i]['details'] = counts 
                             density_label = self.traffic_logic.get_density_label(total)
                             self.lane_data[i]['density'] = density_label
-                            
+
+                            # ── ANPR: Run plate detection on detected vehicles ──
+                            if self.plate_detector.ready:
+                                try:
+                                    plate_results = self.plate_detector.process_frame(
+                                        frame, veh_data_list, lane_id=i,
+                                        camera_source=str(self.sources[i] or f'Lane {i+1}')
+                                    )
+                                    self.plate_detections[i] = plate_results
+                                except Exception as pe:
+                                    print(f"ANPR error lane {i}: {pe}")
+
                             # DB logging: periodically
                             current_time = time.time()
                             if self.last_db_log + 5 < current_time:
@@ -180,21 +204,23 @@ class VideoProcessor:
                                 except Exception as e:
                                     print(f"DB Log Error: {e}")
 
-                        # -- DRAWING (Every Frame) --
-                        # Draw Ambulances
+                        # -- DRAWING (Every Frame) — use TRACKED boxes for stability --
+                        # Draw Ambulances (from cached — no smoothing needed)
                         for (ax1, ay1, ax2, ay2) in cached_boxes[i]['ambulance']:
                             cv2.rectangle(frame, (ax1, ay1), (ax2, ay2), (0, 0, 255), 3)
                             cv2.putText(frame, "AMBULANCE", (ax1, ay1 - 10), 
                                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
                         
-                        # Draw Vehicles
-                        for box_data in cached_boxes[i]['vehicles']:
+                        # Draw Vehicles — use SMOOTHED tracked boxes
+                        tracked_vehicles = self.box_tracker.get_boxes(i)
+                        for box_data in tracked_vehicles:
                             (vx1, vy1, vx2, vy2) = box_data['coords']
                             
-                            # Don't draw over ambulance (Optional check)
+                            # Don't draw over ambulance
                             is_ambu = False
                             for (ax1, ay1, ax2, ay2) in cached_boxes[i]['ambulance']:
-                                if vx1 == ax1 and vy1 == ay1:
+                                iou = BoxTracker._compute_iou((vx1, vy1, vx2, vy2), (ax1, ay1, ax2, ay2))
+                                if iou > 0.5:
                                     is_ambu = True
                                     break
                             if is_ambu: continue
@@ -204,7 +230,15 @@ class VideoProcessor:
                             cv2.rectangle(frame, (vx1, vy1), (vx2, vy2), color, 2)
                             cv2.putText(frame, label, (vx1, vy1 - 10), 
                                         cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, 1)
-                        
+
+                        # ── Draw ANPR plate detections ──
+                        for pdet in self.plate_detections.get(i, []):
+                            bx1, by1, bx2, by2 = pdet['bbox']
+                            cv2.rectangle(frame, (bx1, by1), (bx2, by2), (0, 255, 255), 2)
+                            plate_label = f"{pdet['plate']} {int(pdet['confidence']*100)}%"
+                            cv2.putText(frame, plate_label, (bx1, by1 - 6),
+                                        cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 255), 1)
+
                         # Adaptive JPEG quality: lower quality when more streams are active
                         active_count = sum(1 for c in self.caps if c is not None)
                         jpeg_quality = 45 if active_count > 2 else 70

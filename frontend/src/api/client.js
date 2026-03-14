@@ -110,6 +110,8 @@ export const analytics = {
         const qs = new URLSearchParams(params).toString();
         return request(`/plate_logs?${qs}`);
     },
+    trafficIntelligence: () => request('/traffic_intelligence'),
+    anprStats: () => request('/anpr_stats'),
 };
 
 // ── Dispatch ──

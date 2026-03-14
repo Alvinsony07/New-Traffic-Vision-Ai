@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { dashboard } from '../api/client';
 import { useToast } from '../context/ToastContext';
 import { Video, Upload, Link as LinkIcon, Play, X, Camera } from 'lucide-react';
@@ -11,6 +12,7 @@ export default function CameraConfigPage() {
     const [loading, setLoading] = useState(false);
     const fileRefs = [useRef(null), useRef(null), useRef(null), useRef(null)];
     const { addToast } = useToast();
+    const navigate = useNavigate();
 
     const updateSource = (index, field, value) => {
         setSources(prev => {
@@ -30,6 +32,8 @@ export default function CameraConfigPage() {
             });
             await dashboard.setupStreams(formData);
             addToast('Video sources configured successfully! Processing started.', 'success');
+            // Redirect back to dashboard to view the streams
+            setTimeout(() => navigate('/dashboard'), 600);
         } catch (err) {
             addToast('Failed to configure sources: ' + err.message, 'error');
         } finally {

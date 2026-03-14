@@ -38,8 +38,9 @@ export default function DashboardPage({ manualMode = false }) {
     const navigate = useNavigate();
     const [data, setData] = useState(null);
     const [lastAmbulanceState, setLastAmbulanceState] = useState(false);
-    const [sessionTime] = useState(Date.now());
+    const [streamKey, setStreamKey] = useState(Date.now());
     const [incidentReports, setIncidentReports] = useState([]);
+    const feedImgRefs = useRef([null, null, null, null]);
     const [activeDispatches, setActiveDispatches] = useState([]);
     const [eventLog, setEventLog] = useState([{ time: 'System', msg: 'Dashboard initialized. Monitor active.', type: 'system' }]);
     const [startTime] = useState(Date.now());
@@ -72,8 +73,31 @@ export default function DashboardPage({ manualMode = false }) {
             } catch (err) { console.error("Failed to fetch status:", err); }
         };
         fetchData();
-        const interval = setInterval(fetchData, 2000);  // 2s is responsive enough (was 1s)
+        const interval = setInterval(fetchData, 2000);
         return () => clearInterval(interval);
+    }, []);
+
+    // ── Refresh stream URLs on mount + visibility change ──
+    useEffect(() => {
+        // Fresh key on every mount ensures new MJPEG connections
+        setStreamKey(Date.now());
+
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') {
+                // Tab regained focus — refresh all feeds
+                setStreamKey(Date.now());
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibility);
+
+        // Cleanup: close all MJPEG connections on unmount
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibility);
+            // Force-close MJPEG streams by clearing img src
+            feedImgRefs.current.forEach(img => {
+                if (img) img.src = '';
+            });
+        };
     }, []);
 
     // Fetch incident reports & track new ones
@@ -491,10 +515,18 @@ export default function DashboardPage({ manualMode = false }) {
 
                                 {/* Video Feed */}
                                 <div className="aspect-[4/3] max-h-[280px] w-full bg-[#0a0a0a] relative flex items-center justify-center border-b border-white/[0.04] overflow-hidden p-0">
-                                    <img src={`/api/video_feed/${i}?t=${sessionTime}`}
+                                    <img
+                                        ref={el => { feedImgRefs.current[i] = el; }}
+                                        src={`/api/video_feed/${i}?t=${streamKey}`}
                                         className="w-full h-full object-cover z-10 relative saturate-110"
                                         alt={`Lane ${i + 1} Feed`}
-                                        onError={(e) => { e.target.style.opacity = '0'; setTimeout(() => e.target.src = `/api/video_feed/${i}?t=${Date.now()}`, 5000); }}
+                                        onError={(e) => {
+                                            e.target.style.opacity = '0';
+                                            // Retry after 3 seconds with fresh timestamp
+                                            setTimeout(() => {
+                                                if (e.target) e.target.src = `/api/video_feed/${i}?t=${Date.now()}`;
+                                            }, 3000);
+                                        }}
                                         onLoad={(e) => { e.target.style.opacity = '1'; }}
                                         style={{ opacity: 0, transition: 'opacity 0.5s ease-in-out' }} />
                                     <div className="absolute inset-0 flex items-center justify-center z-0">
