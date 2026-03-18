@@ -287,8 +287,8 @@ export default function CityOverviewPage() {
         if (layers.trafficLayer) {
             if (!trafficTileRef.current) {
                 trafficTileRef.current = L.tileLayer(
-                    'https://mt{s}.google.com/vt/lyrs=m@221097413,traffic&x={x}&y={y}&z={z}',
-                    { subdomains: '0123', maxZoom: 20, opacity: 0.6 }
+                    'https://mt{s}.google.com/vt/lyrs=h,traffic|v:2&x={x}&y={y}&z={z}',
+                    { subdomains: '0123', maxZoom: 20, opacity: 1.0 }
                 );
             }
             if (!map.hasLayer(trafficTileRef.current)) trafficTileRef.current.addTo(map);

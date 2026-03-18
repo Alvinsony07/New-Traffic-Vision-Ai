@@ -143,12 +143,11 @@ app.include_router(settings_router.router)
 
 
 # ── Health check with system diagnostics ──
-import time as _time
-_startup_time = _time.time()
+_startup_time = time.time()
 
 @app.get("/api/health")
 def health():
-    uptime_secs = int(_time.time() - _startup_time)
+    uptime_secs = int(time.time() - _startup_time)
     hours, remainder = divmod(uptime_secs, 3600)
     minutes, seconds = divmod(remainder, 60)
     

@@ -46,7 +46,7 @@ class VideoProcessor:
         
         self.running = False
         self.thread = None
-        self.last_db_log = 0  # Timestamp of last DB write
+        self.last_db_log = {}  # Timestamp of last DB write per lane
 
     def start_streams(self, video_paths):
         """
@@ -187,22 +187,13 @@ class VideoProcessor:
 
                             # DB logging: periodically
                             current_time = time.time()
-                            if self.last_db_log + 5 < current_time:
-                                try:
-                                    with SessionLocal() as db_session:
-                                        stats = LaneStats(lane_id=i+1, vehicle_count=total, density=density_label)
-                                        db_session.add(stats)
-                                        
-                                        # Also log the specific vehicle breakdown for Analytics pie chart
-                                        for v_type, v_count in counts.items():
-                                            if v_count > 0:
-                                                v_log = VehicleLog(lane_id=i+1, vehicle_type=v_type, count=v_count)
-                                                db_session.add(v_log)
-                                                
-                                        db_session.commit()
-                                        self.last_db_log = current_time
-                                except Exception as e:
-                                    print(f"DB Log Error: {e}")
+                            if self.last_db_log.get(i, 0) + 5 < current_time:
+                                self.last_db_log[i] = current_time
+                                threading.Thread(
+                                    target=self._log_to_db,
+                                    args=(i+1, total, density_label, counts),
+                                    daemon=True
+                                ).start()
 
                         # -- DRAWING (Every Frame) — use TRACKED boxes for stability --
                         # Draw Ambulances (from cached — no smoothing needed)
@@ -257,6 +248,19 @@ class VideoProcessor:
             
             if current_signal_logic:
                 current_signal_logic.set_ambulance_event(ambulance_lane, ambulance_lane != -1)
+
+    def _log_to_db(self, lane_id, total, density_label, counts):
+        try:
+            with SessionLocal() as db_session:
+                stats = LaneStats(lane_id=lane_id, vehicle_count=total, density=density_label)
+                db_session.add(stats)
+                for v_type, v_count in counts.items():
+                    if v_count > 0:
+                        v_log = VehicleLog(lane_id=lane_id, vehicle_type=v_type, count=v_count)
+                        db_session.add(v_log)
+                db_session.commit()
+        except Exception as e:
+            print(f"DB Log Error: {e}")
 
     def get_frame(self, lane_id):
         return self.frame_data.get(lane_id)

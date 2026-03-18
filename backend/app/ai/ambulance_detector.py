@@ -2,7 +2,6 @@ from ultralytics import YOLO
 import cv2
 import numpy as np
 import easyocr
-import threading
 
 class AmbulanceDetector:
     def __init__(self, model_path, confidence=0.6):

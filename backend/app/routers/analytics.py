@@ -1,7 +1,7 @@
 """
 Analytics Router — Stats, trends, predictions, reports data, exports, PDF generation
 """
-from datetime import datetime as dt, timedelta
+from datetime import datetime as dt, timedelta, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Query, HTTPException
@@ -21,6 +21,9 @@ router = APIRouter(prefix="/api", tags=["Analytics"])
 # ──────────────────────────────────────
 @router.get("/stats")
 def get_stats(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    now = dt.now(timezone.utc)
+    day_ago = now - timedelta(days=1)
+    
     # 1. Traffic Volume Trend (last 50 entries)
     trend_stats = db.query(LaneStats).order_by(LaneStats.timestamp.desc()).limit(50).all()
     trend_data = [
@@ -29,7 +32,9 @@ def get_stats(db: Session = Depends(get_db), current_user: User = Depends(get_cu
     ]
 
     # 2. Vehicle type distribution
-    dist_query = db.query(VehicleLog.vehicle_type, func.sum(VehicleLog.count)).group_by(VehicleLog.vehicle_type).all()
+    dist_query = db.query(VehicleLog.vehicle_type, func.sum(VehicleLog.count)).filter(
+        VehicleLog.timestamp >= day_ago
+    ).group_by(VehicleLog.vehicle_type).all()
     dist_data = {vtype: int(count) for vtype, count in dist_query}
 
     # 3. Peak hours
@@ -41,12 +46,14 @@ def get_stats(db: Session = Depends(get_db), current_user: User = Depends(get_cu
     for h, count in peak_query:
         peak_data[int(h)] = int(count)
 
-    # 4. Lane load (avg density)
-    lane_query = db.query(LaneStats.lane_id, func.avg(LaneStats.vehicle_count)).group_by(LaneStats.lane_id).all()
+    # 4. Lane load (avg density) over the last 24 hours
+    lane_query = db.query(LaneStats.lane_id, func.avg(LaneStats.vehicle_count)).filter(
+        LaneStats.timestamp >= day_ago
+    ).group_by(LaneStats.lane_id).all()
     lane_data = {lid: round(float(avg), 1) for lid, avg in lane_query}
 
-    # 5. Emergency count
-    ambulance_events = db.query(DispatchLog).count()
+    # 5. Emergency count in last 24 hours
+    ambulance_events = db.query(DispatchLog).filter(DispatchLog.timestamp >= day_ago).count()
 
     return {
         "trend": trend_data,
@@ -430,7 +437,7 @@ def get_traffic_intelligence(
     current_user: User = Depends(get_current_user)
 ):
     """Generate real-time traffic AI insights from historical data."""
-    now = dt.utcnow()
+    now = dt.now(timezone.utc)
     hour_ago = now - timedelta(hours=1)
     day_ago = now - timedelta(days=1)
 
@@ -536,7 +543,7 @@ def get_anpr_stats(
     current_user: User = Depends(get_current_user)
 ):
     """ANPR dashboard statistics."""
-    now = dt.utcnow()
+    now = dt.now(timezone.utc)
     day_ago = now - timedelta(days=1)
 
     total_plates = db.query(NumberPlateLog).count()

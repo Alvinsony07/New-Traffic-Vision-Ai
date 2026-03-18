@@ -22,7 +22,7 @@ class TrafficLogic:
                 for row in rows:
                     try:
                         settings[row.key] = json.loads(row.value)
-                    except:
+                    except (json.JSONDecodeError, TypeError, ValueError):
                         settings[row.key] = row.value
         except Exception as e:
             print(f"Error fetching settings in TrafficLogic: {e}")
